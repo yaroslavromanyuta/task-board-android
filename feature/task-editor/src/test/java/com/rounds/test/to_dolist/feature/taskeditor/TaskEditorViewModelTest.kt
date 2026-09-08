@@ -10,6 +10,7 @@ import com.rounds.test.to_dolist.tasks.usecase.GetTaskUseCase
 import com.rounds.test.to_dolist.tasks.usecase.SaveTaskUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import java.time.Instant
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -172,6 +173,40 @@ class TaskEditorViewModelTest {
         assertNull(viewModel.uiState.value.saveError)
     }
 
+    // --- FR-13: the optional due date ------------------------------------------------------------
+
+    @Test
+    fun `a due date is saved and can be cleared again`() = runTest {
+        val viewModel = createMode()
+        viewModel.onTitleChange("Renew domain")
+        val due = Instant.parse("2026-09-11T09:00:00Z")
+
+        viewModel.onDueDateChange(due)
+        assertEquals(due, viewModel.uiState.value.dueDate)
+
+        viewModel.onSave()
+        advanceUntilIdle()
+        assertEquals(due, repository.observeTasks().first().single().dueDate)
+
+        viewModel.onDueDateChange(null)
+        assertNull(viewModel.uiState.value.dueDate)
+    }
+
+    @Test
+    fun `edit mode seeds the due date the task already has`() = runTest {
+        val due = Instant.parse("2026-09-11T09:00:00Z")
+        val repository = FakeTaskRepository(source = listOf(TestData.task(id = "1", dueDate = due)))
+        val viewModel = TaskEditorViewModel(
+            savedStateHandle = handle(taskId = "1"),
+            getTask = GetTaskUseCase(repository),
+            saveTask = SaveTaskUseCase(repository),
+        )
+
+        advanceUntilIdle()
+
+        assertEquals(due, viewModel.uiState.value.dueDate)
+    }
+
     // --- NFR-07: the form survives the process being killed ------------------------------------
 
     @Test
@@ -182,10 +217,15 @@ class TaskEditorViewModelTest {
         viewModel.onTitleChange("Half typed")
         viewModel.onNotesChange("and a note")
         viewModel.onPriorityChange(TaskPriority.HIGH)
+        viewModel.onDueDateChange(Instant.parse("2026-09-11T09:00:00Z"))
 
         assertEquals("Half typed", handle.get<String>("form_title"))
         assertEquals("and a note", handle.get<String>("form_notes"))
         assertEquals("HIGH", handle.get<String>("form_priority"))
+        assertEquals(
+            Instant.parse("2026-09-11T09:00:00Z").toEpochMilli(),
+            handle.get<Long>("form_due_date"),
+        )
     }
 
     @Test

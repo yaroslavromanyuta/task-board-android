@@ -15,6 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import kotlin.random.Random
 
 /**
@@ -45,6 +46,35 @@ class FakeTaskApiTest {
             tasks[3].title,
         )
         assertTrue(tasks.all { it.createdAtEpochMillis == clock.now().toEpochMilli() })
+    }
+
+    /** Two of the four rows carry a due date, so the list renders both cases from launch (FR-13). */
+    @Test
+    fun `seed due dates are resolved against the injected clock`() = runTest {
+        val tasks = api().getTasks()
+
+        assertEquals(
+            clock.now().plus(3, ChronoUnit.DAYS).toEpochMilli(),
+            tasks[0].dueDateEpochMillis,
+        )
+        assertEquals(null, tasks[1].dueDateEpochMillis)
+        assertEquals(null, tasks[2].dueDateEpochMillis)
+        assertEquals(
+            clock.now().minus(1, ChronoUnit.DAYS).toEpochMilli(),
+            tasks[3].dueDateEpochMillis,
+        )
+    }
+
+    @Test
+    fun `a due date is stored, changed and cleared through the payload`() = runTest {
+        val api = api()
+        val due = clock.now().plus(2, ChronoUnit.DAYS).toEpochMilli()
+
+        val created = api.createTask(payload(dueDateEpochMillis = due))
+        assertEquals(due, created.dueDateEpochMillis)
+
+        val cleared = api.updateTask(created.id, payload(dueDateEpochMillis = null))
+        assertEquals(null, cleared.dueDateEpochMillis)
     }
 
     @Test
@@ -166,7 +196,14 @@ class FakeTaskApiTest {
         notes: String? = null,
         priority: String = "MEDIUM",
         completed: Boolean = false,
-    ) = TaskPayload(title = title, notes = notes, priority = priority, completed = completed)
+        dueDateEpochMillis: Long? = null,
+    ) = TaskPayload(
+        title = title,
+        notes = notes,
+        priority = priority,
+        completed = completed,
+        dueDateEpochMillis = dueDateEpochMillis,
+    )
 
     private class FixedClock(private val instant: Instant) : Clock {
         override fun now(): Instant = instant
