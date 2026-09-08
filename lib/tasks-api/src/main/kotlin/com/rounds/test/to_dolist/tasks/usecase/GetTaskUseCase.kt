@@ -11,5 +11,5 @@ import javax.inject.Inject
 class GetTaskUseCase @Inject constructor(
     private val repository: TaskRepository,
 ) {
-    suspend operator fun invoke(id: String): Result<Task> = TODO("Skeleton: implemented with the data layer")
+    suspend operator fun invoke(id: String): Result<Task> = repository.getTask(id)
 }

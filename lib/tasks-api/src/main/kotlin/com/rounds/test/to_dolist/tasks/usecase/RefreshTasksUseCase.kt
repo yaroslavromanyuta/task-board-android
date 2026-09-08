@@ -7,5 +7,5 @@ import javax.inject.Inject
 class RefreshTasksUseCase @Inject constructor(
     private val repository: TaskRepository,
 ) {
-    suspend operator fun invoke(): Result<Unit> = TODO("Skeleton: implemented with the data layer")
+    suspend operator fun invoke(): Result<Unit> = repository.refresh()
 }

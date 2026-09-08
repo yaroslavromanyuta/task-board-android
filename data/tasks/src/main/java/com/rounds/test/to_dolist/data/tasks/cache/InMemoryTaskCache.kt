@@ -3,6 +3,7 @@ package com.rounds.test.to_dolist.data.tasks.cache
 import com.rounds.test.to_dolist.tasks.model.Task
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -24,14 +25,18 @@ class InMemoryTaskCache @Inject constructor() {
     fun snapshot(): List<Task> = tasks.value
 
     fun replaceAll(tasks: List<Task>) {
-        TODO("Skeleton: implemented with the mock network layer")
+        this.tasks.value = tasks
     }
 
+    /** Replaces by id rather than appending blindly, so a re-saved task cannot appear twice. */
     fun upsert(task: Task) {
-        TODO("Skeleton: implemented with the mock network layer")
+        tasks.update { current ->
+            val index = current.indexOfFirst { it.id == task.id }
+            if (index < 0) current + task else current.toMutableList().apply { this[index] = task }
+        }
     }
 
     fun remove(id: String) {
-        TODO("Skeleton: implemented with the mock network layer")
+        tasks.update { current -> current.filterNot { it.id == id } }
     }
 }
