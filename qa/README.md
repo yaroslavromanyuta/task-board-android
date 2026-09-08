@@ -12,6 +12,7 @@ existed. `docs/WALKTHROUGH.md` §7 lists that gap as items 5, 6 and 8 of what to
 - [`TEST-PLAN.md`](TEST-PLAN.md) — the catalogue, the traceability matrix and the known-defect
   watchlist.
 - [`journeys/`](journeys) — one XML file per scenario.
+- [`results/`](results) — per-action JSON from each run.
 
 ## What a journey is
 
@@ -168,6 +169,25 @@ adb exec-out uiautomator dump /dev/tty          # ~3 s, full node attributes
 Prefer it whenever a step turns on `enabled`, `checked` or the contents of a text field. It is also
 what makes ST-01 practical at a lower latency: 8000 is enough if you are reading the screen this
 way.
+
+### Two things that will waste a run if you miss them
+
+**Snackbars are short, and the two kinds differ.** A failure snackbar is
+`SnackbarDuration.Short` — about four seconds — so the dump has to *start* within roughly a second of
+the action that caused it. The delete snackbar is `Indefinite` and never leaves on its own (that is
+TL-08's finding, not a feature). Do not use `android layout` for either: at 20 s a call, it will miss
+the first and mislead you about the second.
+
+**The soft keyboard covers the snackbar.** After typing into the search field or a form, the IME sits
+over the bottom of the screen where the snackbar renders. A tap aimed at "Undo" lands on a key
+instead — in one run it hit backspace and silently cleared the query. Dismiss it first:
+
+```bash
+adb shell dumpsys input_method | grep mInputShown   # mInputShown=true means it is up
+adb shell input keyevent KEYCODE_BACK               # only when it is
+```
+
+Do not send BACK unconditionally: with no keyboard up it navigates instead.
 
 ### Where state actually lives in the tree
 
