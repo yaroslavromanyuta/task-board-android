@@ -172,12 +172,81 @@ class TaskEditorViewModelTest {
         assertNull(viewModel.uiState.value.saveError)
     }
 
-    private fun createMode() = viewModel(taskId = null)
+    // --- NFR-07: the form survives the process being killed ------------------------------------
 
-    private fun editMode(taskId: String) = viewModel(taskId = taskId)
+    @Test
+    fun `field edits are written through to the handle`() = runTest {
+        val handle = handle(taskId = null)
+        val viewModel = viewModel(handle)
 
-    private fun viewModel(taskId: String?) = TaskEditorViewModel(
-        savedStateHandle = SavedStateHandle(mapOf("taskId" to taskId)),
+        viewModel.onTitleChange("Half typed")
+        viewModel.onNotesChange("and a note")
+        viewModel.onPriorityChange(TaskPriority.HIGH)
+
+        assertEquals("Half typed", handle.get<String>("form_title"))
+        assertEquals("and a note", handle.get<String>("form_notes"))
+        assertEquals("HIGH", handle.get<String>("form_priority"))
+    }
+
+    @Test
+    fun `a recreated process restores the form the user had typed`() = runTest {
+        val restored = viewModel(
+            handle(taskId = null).apply {
+                set("form_title", "Half typed")
+                set("form_notes", "and a note")
+                set("form_priority", "HIGH")
+            },
+        )
+
+        advanceUntilIdle()
+
+        val state = restored.uiState.value
+        assertEquals("Half typed", state.title)
+        assertEquals("and a note", state.notes)
+        assertEquals(TaskPriority.HIGH, state.priority)
+    }
+
+    /**
+     * The saved form is newer than anything the source holds, so re-running the load would overwrite
+     * the user's work with the server's values the moment the process came back.
+     */
+    @Test
+    fun `a restored edit form is not reloaded over`() = runTest {
+        val restored = viewModel(
+            handle(taskId = "1").apply {
+                set("form_title", "Half typed")
+                set("form_notes", "")
+                set("form_priority", "MEDIUM")
+            },
+        )
+
+        assertFalse(restored.uiState.value.isLoading)
+        advanceUntilIdle()
+
+        assertEquals("Half typed", restored.uiState.value.title)
+        assertTrue(restored.uiState.value.isEditing)
+    }
+
+    @Test
+    fun `a loaded form is remembered too, so it survives a kill before the first keystroke`() = runTest {
+        val handle = handle(taskId = "2")
+        viewModel(handle)
+
+        advanceUntilIdle()
+
+        val existing = TestData.tasks.first { it.id == "2" }
+        assertEquals(existing.title, handle.get<String>("form_title"))
+        assertEquals(existing.priority.name, handle.get<String>("form_priority"))
+    }
+
+    private fun createMode() = viewModel(handle(taskId = null))
+
+    private fun editMode(taskId: String) = viewModel(handle(taskId = taskId))
+
+    private fun handle(taskId: String?) = SavedStateHandle(mapOf("taskId" to taskId))
+
+    private fun viewModel(savedStateHandle: SavedStateHandle) = TaskEditorViewModel(
+        savedStateHandle = savedStateHandle,
         getTask = GetTaskUseCase(repository),
         saveTask = SaveTaskUseCase(repository),
     )

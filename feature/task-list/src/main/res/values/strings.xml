@@ -1,7 +1,19 @@
 <resources>
     <string name="task_list_title">Tasks</string>
     <string name="task_list_empty">No tasks yet. Tap + to add one.</string>
+    <string name="task_list_no_matches">No tasks match “%1$s”.</string>
     <string name="task_list_action_add">Add task</string>
     <string name="task_list_action_delete">Delete task</string>
     <string name="task_list_action_toggle">Mark complete</string>
+
+    <string name="task_list_search_hint">Search by title</string>
+    <string name="task_list_action_clear_search">Clear search</string>
+
+    <string name="task_list_action_sort">Sort tasks</string>
+    <string name="task_list_sort_default">Default order</string>
+    <string name="task_list_sort_priority">Priority</string>
+    <string name="task_list_sort_completion">Unfinished first</string>
+
+    <string name="task_list_deleted">Task deleted</string>
+    <string name="task_list_action_undo">Undo</string>
 </resources>

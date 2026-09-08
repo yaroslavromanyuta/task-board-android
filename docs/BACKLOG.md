@@ -41,13 +41,14 @@ acceptance criterion, and every dependency is done.
 | E2 | Data layer: cache, repository, use cases | FR-06, NFR-04, NFR-13 | 18 | ☑ done |
 | E3 | Task list screen | FR-01, FR-03, FR-04, FR-07…FR-09 | 18 | ☑ done |
 | E4 | Task detail / edit screen | FR-02, FR-05 | 13 | ☑ done |
-| E5 | Resilience and state handling | FR-12, NFR-06, NFR-07 | 16 | ☐ |
-| E6 | Stretch: list shaping | FR-10, FR-11 | 11 | ☐ |
+| E5 | Resilience and state handling | FR-12, NFR-06, NFR-07 | 16 | ☑ done |
+| E6 | Stretch: list shaping | FR-10, FR-11 | 11 | ☑ done |
 | E7 | Stretch: presentation | FR-13, FR-14 | 16 | ☐ |
 | E8 | Handover: documentation and walkthrough | §4, brief closing section | 5 | ☐ |
 
-Total open: 48 points across E5–E8. E1–E3 (52 points) delivered in iteration 1, E4 (13 points) in
-iteration 2. The brief's six core requirements are all closed.
+Total open: 21 points across E7 and E8. E1–E3 (52 points) delivered in iteration 1, E4 (13 points) in
+iteration 2, E5 and E6 (27 points) in iteration 3. The brief's six core requirements and four of its
+six stretch goals are closed.
 
 ## 3. Iteration plan
 
@@ -59,8 +60,8 @@ iteration boundary and still leave a coherent product.
 | 0 | Walking skeleton | E0 | 21 ☑ | App runs, navigates list → editor → back, renders the empty state |
 | 1 | Read path | E1, E2, E3 | 52 ☑ | List loads real seed data with a spinner; failures show an error with Retry; complete and delete work from the list |
 | 2 | Write path | E4 | 13 ☑ | Create and edit against the mock source, completing full CRUD |
-| 3 | Resilience | E5 | 16 | Write failures surfaced without blanking the list; undo delete; survives rotation and process death |
-| 4 | Stretch | E6, E7 | 27 | Search, sort, due dates, dark mode |
+| 3 | Resilience and list shaping | E5, E6 | 27 ☑ | Write failures surfaced without blanking the list; undo delete; survives rotation and process death; search and sort |
+| 4 | Stretch: presentation | E7 | 16 | Due dates, dark mode |
 | 5 | Handover | E8 | 5 | README, deviation rationale, "what I would do next" |
 
 **Iteration 1 is deliberately the largest.** It is the vertical slice that turns the skeleton into a
@@ -198,7 +199,7 @@ Requirements: FR-02, FR-05.
 
 ---
 
-### E5 — Resilience and state handling
+### E5 — Resilience and state handling ☑ delivered
 
 Requirements: FR-12, NFR-06, NFR-07, and the FR-09 boundary case.
 
@@ -213,15 +214,15 @@ Requirements: FR-12, NFR-06, NFR-07, and the FR-09 boundary case.
 
 | ID | Task | Module / file | Pts | Depends on | Acceptance |
 |---|---|---|---|---|---|
-| TB-501 | Surface write and refresh failures transiently via a `SnackbarHost` when content is already on screen, instead of replacing the list with an error state. | `feature/task-list/.../TaskListScreen.kt`, `TaskListViewModel.kt` | 3 | TB-302 | A failed toggle shows a snackbar; the list stays populated (FR-09 boundary). |
-| TB-502 | Back the editor form fields with `SavedStateHandle` so a half-typed form survives process recreation. | `feature/task-editor/.../TaskEditorViewModel.kt` | 3 | TB-402 | "Don't keep activities" on: the typed title survives (NFR-07). |
-| TB-503 | Verify rotation on both screens; fix anything lost. | both feature modules | 2 | TB-502 | Scroll position and form contents survive rotation (NFR-06). |
-| TB-504 | Implement undo-delete: retain the deleted task, offer Undo in the snackbar, re-create it on action. | `feature/task-list/.../TaskListViewModel.kt`, `TaskListScreen.kt` | 5 | TB-306, TB-501 | Undo restores the task with its fields intact (FR-12). |
-| TB-505 | Unit-test undo and transient error surfacing. | `feature/task-list/src/test/.../TaskListViewModelTest.kt` | 3 | TB-504 | Undo path and snackbar-event path both covered. |
+| TB-501 ☑ | Surface write and refresh failures transiently via a `SnackbarHost` when content is already on screen, instead of replacing the list with an error state. | `feature/task-list/.../TaskListScreen.kt`, `TaskListViewModel.kt` | 3 | TB-302 | A failed toggle shows a snackbar; the list stays populated (FR-09 boundary). |
+| TB-502 ☑ | Back the editor form fields with `SavedStateHandle` so a half-typed form survives process recreation. | `feature/task-editor/.../TaskEditorViewModel.kt` | 3 | TB-402 | "Don't keep activities" on: the typed title survives (NFR-07). |
+| TB-503 ☑ | Verify rotation on both screens; fix anything lost. | both feature modules | 2 | TB-502 | Scroll position and form contents survive rotation (NFR-06). |
+| TB-504 ☑ | Implement undo-delete: retain the deleted task, offer Undo in the snackbar, re-create it on action. | `feature/task-list/.../TaskListViewModel.kt`, `TaskListScreen.kt` | 5 | TB-306, TB-501 | Undo restores the task with its fields intact (FR-12). |
+| TB-505 ☑ | Unit-test undo and transient error surfacing. | `feature/task-list/src/test/.../TaskListViewModelTest.kt` | 3 | TB-504 | Undo path and snackbar-event path both covered. |
 
 ---
 
-### E6 — Stretch: list shaping
+### E6 — Stretch: list shaping ☑ delivered
 
 Requirements: FR-10, FR-11.
 
@@ -230,10 +231,10 @@ Requirements: FR-10, FR-11.
 
 | ID | Task | Module / file | Pts | Depends on | Acceptance |
 |---|---|---|---|---|---|
-| TB-601 | Add `query` to `TaskListUiState` and derive the filtered list. Filtering happens over the cached list, not by re-querying the source. | `feature/task-list/.../TaskListUiState.kt`, `TaskListViewModel.kt` | 3 | TB-301 | Typing narrows the list; clearing restores it (FR-10). |
-| TB-602 | Add the search field to the app bar and a distinct "no matches" message, separate from "no tasks at all". | `feature/task-list/.../TaskListScreen.kt`, `core/ui` strings | 2 | TB-601 | The two empty states read differently. |
-| TB-603 | Add a sort mode (priority, completion, default) to the state and apply it in `ObserveTasksUseCase` or the ViewModel's derivation. | `lib/tasks-api/.../usecase/ObserveTasksUseCase.kt`, `feature/task-list/…` | 3 | TB-301 | Order changes and holds while the screen is open (FR-11). |
-| TB-604 | Sort control in the UI, plus tests for filter and sort derivation. | `feature/task-list/.../TaskListScreen.kt`, `…/TaskListViewModelTest.kt` | 3 | TB-602, TB-603 | Derivations tested without touching the source. |
+| TB-601 ☑ | Add `query` to `TaskListUiState` and derive the filtered list. Filtering happens over the cached list, not by re-querying the source. | `feature/task-list/.../TaskListUiState.kt`, `TaskListViewModel.kt` | 3 | TB-301 | Typing narrows the list; clearing restores it (FR-10). |
+| TB-602 ☑ | Add the search field to the app bar and a distinct "no matches" message, separate from "no tasks at all". | `feature/task-list/.../TaskListScreen.kt`, `core/ui` strings | 2 | TB-601 | The two empty states read differently. |
+| TB-603 ☑ | Add a sort mode (priority, completion, default) to the state and apply it in `ObserveTasksUseCase` or the ViewModel's derivation. | `lib/tasks-api/.../usecase/ObserveTasksUseCase.kt`, `feature/task-list/…` | 3 | TB-301 | Order changes and holds while the screen is open (FR-11). |
+| TB-604 ☑ | Sort control in the UI, plus tests for filter and sort derivation. | `feature/task-list/.../TaskListScreen.kt`, `…/TaskListViewModelTest.kt` | 3 | TB-602, TB-603 | Derivations tested without touching the source. |
 
 ---
 
@@ -289,6 +290,6 @@ the reasoning behind any deliberate deviation. That is deliverable work, not an 
 
 | ID | Question | Owner | Impact if unresolved |
 |---|---|---|---|
-| Q-1 | Should completed tasks sort to the bottom by default, or hold their position? The brief specifies neither. | Product | Affects TB-205 default ordering and TB-603. Assumption until answered: hold position; sorting stays explicit (FR-11). |
+| Q-1 | Should completed tasks sort to the bottom by default, or hold their position? The brief specifies neither. | Product | **Closed by the assumption.** `TaskSort.DEFAULT` holds position and `TaskSort.COMPLETION` moves them, so the user chooses (FR-11). Reversing the default is a one-line change in `TaskListUiState`. |
 | Q-2 | On a failed delete, should the row reappear immediately or after the next refresh? | Product | Affects TB-204 and TB-306. Assumption: the cache is only updated on success, so the row never disappears in the first place. |
 | Q-3 | Is `Timeout` worth simulating separately from `Network`, or is one failure mode enough? | Engineering | Affects TB-104. Assumption: `Network` only, with `Timeout` reserved in the taxonomy for later. |

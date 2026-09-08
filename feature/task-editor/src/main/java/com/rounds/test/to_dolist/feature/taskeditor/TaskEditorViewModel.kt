@@ -23,13 +23,18 @@ import javax.inject.Inject
  * survives process death without `:app` having to re-supply anything. The presence of an id is the
  * only thing that separates "add" from "view / edit": there is no mode flag to get out of step.
  *
+ * The form itself is written through to the same handle on every keystroke, so a half-typed task
+ * survives the process being killed in the background and not merely a rotation (NFR-07). The
+ * alternative, one `getStateFlow` per field, would have turned one state object into a `combine` of
+ * four flows to persist three strings.
+ *
  * Validation is not repeated here. [SaveTaskUseCase] owns the blank-title rule, and this class maps
  * the failure it returns onto the field the user has to fix — which is why the rule cannot drift
  * between this screen and any future caller.
  */
 @HiltViewModel
 class TaskEditorViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     private val getTask: GetTaskUseCase,
     private val saveTask: SaveTaskUseCase,
 ) : ViewModel() {
@@ -42,24 +47,41 @@ class TaskEditorViewModel @Inject constructor(
      */
     private val taskId: String? = savedStateHandle[Route.TaskEditor.TASK_ID_ARG]
 
+    /**
+     * True when this instance was rebuilt over a form the user had already filled in — a process
+     * recreation rather than a fresh navigation.
+     */
+    private val hasSavedForm: Boolean = savedStateHandle.contains(KEY_TITLE)
+
     private val _uiState = MutableStateFlow(
-        TaskEditorUiState(taskId = taskId, isLoading = taskId != null),
+        TaskEditorUiState(
+            taskId = taskId,
+            title = savedStateHandle[KEY_TITLE] ?: "",
+            notes = savedStateHandle[KEY_NOTES] ?: "",
+            priority = savedStateHandle.get<String>(KEY_PRIORITY)?.let(TaskPriority::valueOf)
+                ?: TaskPriority.MEDIUM,
+            isLoading = taskId != null && !hasSavedForm,
+        ),
     )
     val uiState: StateFlow<TaskEditorUiState> = _uiState.asStateFlow()
 
     init {
-        taskId?.let(::load)
+        // Not reloaded over a restored form: the source's values are older than what the user typed.
+        if (!hasSavedForm) taskId?.let(::load)
     }
 
     fun onTitleChange(value: String) {
+        savedStateHandle[KEY_TITLE] = value
         _uiState.update { it.copy(title = value, titleError = false) }
     }
 
     fun onNotesChange(value: String) {
+        savedStateHandle[KEY_NOTES] = value
         _uiState.update { it.copy(notes = value) }
     }
 
     fun onPriorityChange(value: TaskPriority) {
+        savedStateHandle[KEY_PRIORITY] = value.name
         _uiState.update { it.copy(priority = value) }
     }
 
@@ -105,6 +127,11 @@ class TaskEditorViewModel @Inject constructor(
 
             getTask(taskId).fold(
                 onSuccess = { task ->
+                    rememberForm(
+                        title = task.title,
+                        notes = task.notes.orEmpty(),
+                        priority = task.priority,
+                    )
                     _uiState.update {
                         it.copy(
                             title = task.title,
@@ -125,6 +152,13 @@ class TaskEditorViewModel @Inject constructor(
      * A blank title is the user's to fix in the field they are already looking at; anything else is a
      * failure of the source, and the form survives it untouched.
      */
+    /** Keeps the handle in step with a form the user did not type — the values a load just supplied. */
+    private fun rememberForm(title: String, notes: String, priority: TaskPriority) {
+        savedStateHandle[KEY_TITLE] = title
+        savedStateHandle[KEY_NOTES] = notes
+        savedStateHandle[KEY_PRIORITY] = priority.name
+    }
+
     private fun onSaveFailed(throwable: Throwable) {
         _uiState.update {
             if (throwable is ValidationException.BlankTitle) {
@@ -133,5 +167,11 @@ class TaskEditorViewModel @Inject constructor(
                 it.copy(isSaving = false, saveError = throwable.asDataError())
             }
         }
+    }
+
+    private companion object {
+        const val KEY_TITLE = "form_title"
+        const val KEY_NOTES = "form_notes"
+        const val KEY_PRIORITY = "form_priority"
     }
 }
