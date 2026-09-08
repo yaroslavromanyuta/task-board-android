@@ -3,11 +3,17 @@
 Multi-module Clean Architecture skeleton for a task list app: Kotlin, Jetpack Compose, Hilt,
 Navigation Compose with type-safe routes.
 
-**Delivered: iterations 0, 1 and 2 - all six core requirements.** The app launches into the task list,
-loads the brief's seed data through a mock network source that is slow (300-800 ms) and fails about
-15% of the time, and renders loading, empty and error+retry as real consequences of that source rather
-than as simulations. Tasks can be created, edited, completed and deleted, every one of them through
-that source. Nothing in the codebase calls `TODO()` any more.
+**Delivered: iterations 0-3 - all six core requirements and four of the six stretch goals.** The app
+launches into the task list, loads the brief's seed data through a mock network source that is slow
+(300-800 ms) and fails about 15% of the time, and renders loading, empty and error+retry as real
+consequences of that source rather than as simulations. Tasks can be created, edited, completed and
+deleted, every one of them through that source. A failure that arrives with rows on screen is reported
+over the list instead of replacing it, a deleted task can be undone, the list can be searched and
+sorted, and a half-typed form survives the process being killed. Nothing in the codebase calls
+`TODO()`.
+
+Outstanding: E7 (due dates, dark-mode audit) and E8 (walkthrough notes) - see
+[docs/BACKLOG.md](docs/BACKLOG.md).
 
 ## Module graph
 
@@ -93,11 +99,34 @@ offer is not bent to suit one screen.
 tests without Hilt; the route is the only place that knows a ViewModel exists.
 
 **Route arguments carry an id, not an object.** The editor refetches from the id it receives through
-`SavedStateHandle`, which keeps the nav payload small and survives process death. It reads that id by
+`SavedStateHandle`, which keeps the nav payload small and survives process death. The form's own
+fields are written through to the same handle on every change, so a half-typed task survives the
+process being killed in the background; a restored form is never reloaded over, because the source's
+values are older than what the user typed. It reads that id by
 the name `Route.TaskEditor` publishes rather than through `toRoute()`: `toRoute()` decodes through an
 Android runtime and quietly returns nothing in a JVM unit test, which would have left the whole edit
 path untestable without Robolectric. `RouteTest` asserts the name still matches the serialised
 property, so the two cannot drift.
+
+**A failure is reported over the screen or instead of it, never both.** Each screen splits its failure
+state in two. On the list, `error` is a load that failed with nothing cached, and takes the screen with
+a Retry; `message` is anything that went wrong - or a delete that succeeded - while rows were already
+showing, and passes over them in a snackbar. The ViewModel picks by one rule, "is there content on
+screen", so REQUIREMENTS.md section 9's boundary case lives in one place rather than being re-decided
+per call site.
+
+**Undo re-creates the task rather than resurrecting it.** `TaskApi` has the five REST-shaped
+operations a backend would offer and none of them restores a deleted row, so `RestoreTaskUseCase`
+creates the task again and re-applies `isCompleted` - the flag cannot travel in a `TaskDraft`, which is
+deliberately the editable half of a task. The restored task gets a new source-assigned id and appears
+where a new one would; every field the user can see survives. Bending the transport to preserve the id
+would have made the mock stop looking like a backend, which is the one thing it exists to look like.
+
+**Search and sort are derivations, not queries.** `TaskListUiState` holds `tasks` (everything cached)
+and computes `visibleTasks` from the query and the sort mode. Keeping both is what lets "no tasks yet"
+and "nothing matches" be different sentences. `TaskSort` lives in `:lib:tasks-api` rather than in the
+screen, for the same reason `TaskPriority` is declared low-to-high: the ordering is a fact about tasks,
+and a second surface must not be free to invent a different one.
 
 **The editor distinguishes a failed load from a failed save.** A load failure means there is nothing
 to edit, so the form gives way to a message and a Retry. A save failure means the form is still good
@@ -139,16 +168,19 @@ To see a specific state on demand, set `FakeTaskApi.failureRate` to `0.0` or `1.
 
 ## What is tested
 
-`./gradlew test` runs 41 cases: the mock source (latency window, failure rate, `NotFound`
+`./gradlew test` runs 67 cases: the mock source (latency window, failure rate, `NotFound`
 determinism, CRUD round-trip, concurrent writes against a real dispatcher), the repository (cache
 untouched on a failed write, every failure typed as `DataException`, completion preserved across an
 edit), `SaveTaskUseCase` (validation, create-vs-update routing), `TaskListViewModel` (every branch of
-the state table) and `TaskEditorViewModel` (both modes, seeding, failed load with retry, failed save
-keeping the form).
+the state table, the transient-failure boundary, undo including a completed task, and the search and
+sort derivations) and `TaskEditorViewModel` (both modes, seeding, failed load with retry, failed save
+keeping the form, and a recreated process restoring the form without reloading over it). `TaskSort` and
+`RestoreTaskUseCase` are tested in the domain module, where they live.
 
 ## Next step
 
-Iteration 3 in [docs/BACKLOG.md](docs/BACKLOG.md) — E5, resilience: surface a failed refresh or write
-on the list transiently instead of replacing the list with an error state, undo a delete, and back the
-editor's form fields with `SavedStateHandle` so a half-typed form survives process recreation. The
-editor's snackbar seam from E4 is the pattern the list adopts. The graph does not change.
+Iteration 4 in [docs/BACKLOG.md](docs/BACKLOG.md) — E7, presentation: a `dueDate` on `Task` with
+relative formatting on the row and a date picker in the editor (FR-13), and a dark-mode audit of the
+priority colours (FR-14). TB-701 adds a field to the domain model and ripples through `:data:tasks` and
+both features, so it is the one remaining task that should not be started without room to finish it.
+Then E8, the walkthrough notes.

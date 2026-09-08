@@ -10,7 +10,7 @@
 | Retrieved | 2026-09-08 |
 | Status | Baselined |
 | Companion document | [BACKLOG.md](BACKLOG.md) — epics, stories, tasks, iterations |
-| Implementation status | Iterations 0 (foundation), 1 (read path: E1–E3) and 2 (write path: E4) delivered; all six core requirements closed. See [../README.md](../README.md) |
+| Implementation status | Iterations 0–3 delivered (E0–E6): all six core requirements plus FR-10, FR-11, FR-12, NFR-06 and NFR-07. Outstanding: E7 (FR-13, FR-14) and E8. See [../README.md](../README.md) |
 
 Requirement IDs in this document are stable. `BACKLOG.md` references them; do not renumber.
 
@@ -204,7 +204,25 @@ already-loaded rows stay on screen. `TaskListUiState` holds `tasks`, `isLoading`
 | 4 | otherwise | `LazyColumn` of rows | FR-01 |
 
 A failure arriving while content is already on screen must not blank the list; it is surfaced
-transiently (snackbar) instead. That boundary belongs to FR-09 and is scheduled in E5.
+transiently instead. `TaskListUiState` therefore carries two independent things:
+
+| Field | Meaning | Rendered |
+|---|---|---|
+| `error` | the load failed with nothing cached | full-screen message + Retry (precedence 2 above) |
+| `message` | a failure, or a completed delete, arriving with rows on screen | snackbar over the list |
+
+`message` is a sealed type: `Failure(DataError)` is read and dismissed, `TaskDeleted(Task)` carries the
+whole task so Undo can put it back (FR-12). The ViewModel chooses between `error` and `message` by one
+rule — content on screen means transient — so the screen never has to.
+
+`tasks` is everything the cache holds and `visibleTasks` is what the query and sort left of it. Both
+exist so that "no tasks at all" (`isEmpty`) and "nothing matches what you typed" (`hasNoMatches`) can
+be different sentences (FR-10). Filtering and sorting are derivations over the cached list; neither
+re-queries the source.
+
+Undo re-creates the task, because `TaskApi` has no restore operation. The restored task therefore has
+a new source-assigned id and appears where a newly created one would; every field the user can see —
+including `isCompleted` — survives, which is what `RestoreTaskUseCase` exists to guarantee.
 
 ### Task editor
 
@@ -212,6 +230,10 @@ transiently (snackbar) instead. That boundary belongs to FR-09 and is scheduled 
 |---|---|---|
 | Create | `Route.TaskEditor(taskId = null)` | Empty form, priority `MEDIUM` |
 | Edit | `Route.TaskEditor(taskId = "…")` | `Loading`, then the form seeded from `GetTaskUseCase` |
+
+The form's three fields are written through to `SavedStateHandle` on every change, so a half-typed
+task survives the process being killed and not merely a rotation (NFR-07). A restored form is never
+reloaded over: the source's values are older than what the user typed.
 
 Validation: `canSave` requires a non-blank title and no save or load in flight, and is the button's
 affordance only — the rule itself lives in `SaveTaskUseCase`, which returns
