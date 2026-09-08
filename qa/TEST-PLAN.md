@@ -125,7 +125,7 @@ touches both screens, both failure channels, navigation and a configuration chan
 ST-01  ST-04  TL-01  TL-05  TL-06  ED-01  ED-04  LC-01
 ```
 
-**Full — all 37.** Force-stop between each one. Expect five failures; see below.
+**Full — all 37.** Force-stop between each one. Three fail on the current build: TL-08, LC-03 and AX-02.
 
 ## Run log
 
@@ -152,25 +152,54 @@ here, because they change how every future run is executed: `android layout` tak
 call, disabled state lives on the clickable parent rather than on the label, and a selected
 `FilterChip` reports `checked` rather than `selected`.
 
-The full suite has not been run yet. The five watchlist journeys below are unverified predictions
-until it is.
+### 2026-09-08 — full suite
+
+Same device and build. Results are in
+[`results/2026-09-08-full-run.json`](results/2026-09-08-full-run.json), per action, in the format the
+journey contract specifies.
+
+**34 of 37 passed. 309 actions passed, 3 failed, 5 skipped** (evaluation ends at a journey's first
+failing action).
+
+| Failed | Why |
+|---|---|
+| **TL-08** | **New defect.** The undo snackbar never expires — see the watchlist below |
+| **LC-03** | Predicted. The date picker is dismissed by rotation |
+| **AX-02** | Predicted. A completed row still reports `content-desc="Mark complete"` |
+
+Three journeys needed a second attempt before the app's behaviour could be read at all, and none of
+the three was an app fault:
+
+- **ST-04** — the failure snackbar is `SnackbarDuration.Short`, about four seconds. A dump started
+  five seconds after the tap saw nothing. Read promptly, every assertion holds.
+- **TL-10** — the soft keyboard covers the snackbar. The first attempt tapped through it and hit
+  backspace instead of Undo, which cleared the query and left the task deleted. Dismiss the keyboard
+  before touching a snackbar.
+- **DD-04** — a reader that matches every string starting with `Due ` also picks up the section
+  label `Due date`. Exclude it.
+
+All three are now written up in `README.md`, because they change how any future run is executed.
+
+Everything else passed first time, including all seven editor journeys and all four due-date ones.
 
 ## Known-defect watchlist
 
-Five journeys assert current behaviour that may well be wrong. They are written so that a run
-produces a decision list rather than a bug report — each one names the trade-off and leaves the call
-to product.
+Six entries. Five were written in advance as journeys asserting behaviour that may well be wrong;
+the sixth, TL-08, was found by running them. Each names the trade-off and leaves the call to product.
 
 | Id | What happens today | Why it might be wrong | The fix, if it is |
 |---|---|---|---|
+| **TL-08** ⛔ | The undo snackbar never goes away. `TaskListScreen.kt:168-171` calls `showSnackbar(message, actionLabel)` with no `duration`, and Material3 defaults to `SnackbarDuration.Indefinite` whenever an `actionLabel` is present — so "Task deleted" sits over the list until the user taps Undo or swipes it off, and `withDismissAction` is false, so there is no × either | The failure snackbar next to it *is* `Short`, which is what makes this look unintended rather than chosen. It permanently occludes the bottom of the list, and `message` stays set in the state the whole time. Confirmed on device: still on screen after 25 s | Pass `duration = SnackbarDuration.Long` explicitly |
 | **TL-09** | `TaskListUiState` holds one nullable `message`, so a second delete overwrites the first `TaskDeleted` before the user can act on it | Undo is the only route back and it is offered exactly once. Delete two rows quickly and the first is unrecoverable, silently | A queue of pending deletes, or a confirmation on the second |
 | **ED-05** | Back discards an unsaved edit with no prompt; `onBack` and `onDone` both go to `navigateUp` (`TodoNavHost.kt:31-32`) | Unlike a delete, this has no snackbar behind it. A long note typed and lost is gone with no trace | A "discard changes?" dialog when the form is dirty |
 | **LC-03** | The date picker's visibility is `remember`, not `rememberSaveable` (`TaskEditorScreen.kt:204`), so rotation closes it | NFR-06 asks for state intact across a configuration change. Whether an open dialog counts is the open question | One word: `rememberSaveable` |
 | **AX-02** | The row checkbox is described as "Mark complete" whatever its state (`TaskRow.kt:69`) | TalkBack tells a user they can complete a task that is already complete. The checked state is exposed correctly, so the label contradicts it | A second string, chosen on `isCompleted` |
 | **ED-02** | `canSave` is already false for a whitespace-only title, so `SaveTaskUseCase` is never reached and "A title is required." cannot appear | Not a functional break — the rule holds. But a string, a `supportingText` branch and a tested ViewModel path are unreachable dead UI | Either drop the inline error, or let Save through and rely on the use case |
 
-ED-02 and LC-05 are the two entries where the *expected* outcome is that the journey passes and the
-finding is documentary. The other three are expected to fail as written.
+Three of these are documentary: TL-09, ED-05 and ED-02 assert the current behaviour, so they pass,
+and passing *is* the finding. Two assert the behaviour that ought to hold, so they fail: LC-03 and
+AX-02. TL-08 was not predicted at all — it failed on an assumption the journey made about how a
+snackbar behaves, which turned out to be a defect in the app rather than in the journey.
 
 ## Traceability
 
