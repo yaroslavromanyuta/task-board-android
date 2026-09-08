@@ -5,10 +5,13 @@ import com.rounds.test.to_dolist.core.testing.FakeTaskRepository
 import com.rounds.test.to_dolist.core.testing.MainDispatcherRule
 import com.rounds.test.to_dolist.core.testing.TestData
 import com.rounds.test.to_dolist.tasks.error.DataError
+import com.rounds.test.to_dolist.tasks.model.TaskPriority
+import com.rounds.test.to_dolist.tasks.model.TaskSort
 import com.rounds.test.to_dolist.tasks.repository.TaskRepository
 import com.rounds.test.to_dolist.tasks.usecase.DeleteTaskUseCase
 import com.rounds.test.to_dolist.tasks.usecase.ObserveTasksUseCase
 import com.rounds.test.to_dolist.tasks.usecase.RefreshTasksUseCase
+import com.rounds.test.to_dolist.tasks.usecase.RestoreTaskUseCase
 import com.rounds.test.to_dolist.tasks.usecase.ToggleTaskCompletedUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -21,9 +24,10 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * Every branch of the state table in REQUIREMENTS.md §9 has a case here. The ViewModel is exercised
- * against `:core:testing`'s fake, with no data module on the classpath — which is the boundary rules
- * paying for themselves.
+ * Every branch of the state table in REQUIREMENTS.md §9 has a case here, including the boundary the
+ * table calls out: a failure arriving with rows on screen must be reported without costing the user
+ * the list. The ViewModel is exercised against `:core:testing`'s fake, with no data module on the
+ * classpath — which is the boundary rules paying for themselves.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskListViewModelTest {
@@ -68,6 +72,7 @@ class TaskListViewModelTest {
 
         advanceUntilIdle()
         assertEquals(DataError.Network, viewModel.uiState.value.error)
+        assertNull(viewModel.uiState.value.message)
         assertTrue(viewModel.uiState.value.tasks.isEmpty())
         assertFalse(viewModel.uiState.value.isLoading)
 
@@ -100,8 +105,10 @@ class TaskListViewModelTest {
         assertEquals(listOf("2", "3"), viewModel.uiState.value.tasks.map { it.id })
     }
 
+    // --- FR-09 boundary: a failure with content on screen ---------------------------------------
+
     @Test
-    fun `a failed write reports the error without blanking the list`() = runTest {
+    fun `a failed write is reported over the list, not instead of it`() = runTest {
         val repository = FakeTaskRepository()
         val viewModel = viewModel(repository)
         advanceUntilIdle()
@@ -110,8 +117,183 @@ class TaskListViewModelTest {
         viewModel.onDelete(id = "1")
         advanceUntilIdle()
 
-        assertEquals(DataError.Conflict, viewModel.uiState.value.error)
+        val state = viewModel.uiState.value
+        assertEquals(TaskListMessage.Failure(DataError.Conflict), state.message)
+        assertNull(state.error)
+        assertEquals(TestData.tasks, state.tasks)
+    }
+
+    @Test
+    fun `a failed refresh with rows on screen does not blank them`() = runTest {
+        val repository = FakeTaskRepository()
+        val viewModel = viewModel(repository)
+        advanceUntilIdle()
+        repository.nextError = DataError.Network
+
+        viewModel.onRetry()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(TaskListMessage.Failure(DataError.Network), state.message)
+        assertNull(state.error)
+        assertEquals(TestData.tasks, state.tasks)
+        assertFalse(state.isLoading)
+    }
+
+    @Test
+    fun `a shown message is cleared so a rotation does not repeat it`() = runTest {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.onDelete(id = "1")
+        advanceUntilIdle()
+        viewModel.onMessageShown()
+
+        assertNull(viewModel.uiState.value.message)
+    }
+
+    // --- FR-12: undo ----------------------------------------------------------------------------
+
+    @Test
+    fun `a successful delete offers the task back`() = runTest {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+        val deleted = TestData.tasks.first { it.id == "1" }
+
+        viewModel.onDelete(id = "1")
+        advanceUntilIdle()
+
+        assertEquals(TaskListMessage.TaskDeleted(deleted), viewModel.uiState.value.message)
+    }
+
+    @Test
+    fun `undo restores the task with its fields intact`() = runTest {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.onDelete(id = "2")
+        advanceUntilIdle()
+        val message = viewModel.uiState.value.message as TaskListMessage.TaskDeleted
+
+        viewModel.onUndoDelete(message)
+        advanceUntilIdle()
+
+        val restored = viewModel.uiState.value.tasks.first { it.title == "Renew passport" }
+        assertEquals("Book a slot first", restored.notes)
+        assertEquals(TaskPriority.HIGH, restored.priority)
+        assertEquals(3, viewModel.uiState.value.tasks.size)
+        assertNull(viewModel.uiState.value.message)
+    }
+
+    @Test
+    fun `undoing a completed task restores it completed`() = runTest {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.onDelete(id = "3")
+        advanceUntilIdle()
+        viewModel.onUndoDelete(viewModel.uiState.value.message as TaskListMessage.TaskDeleted)
+        advanceUntilIdle()
+
+        val restored = viewModel.uiState.value.tasks.first { it.title == "Water the plants" }
+        assertTrue(restored.isCompleted)
+    }
+
+    @Test
+    fun `a failed undo is reported and the task stays gone`() = runTest {
+        val repository = FakeTaskRepository()
+        val viewModel = viewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.onDelete(id = "1")
+        advanceUntilIdle()
+        val message = viewModel.uiState.value.message as TaskListMessage.TaskDeleted
+        repository.nextError = DataError.Network
+
+        viewModel.onUndoDelete(message)
+        advanceUntilIdle()
+
+        assertEquals(TaskListMessage.Failure(DataError.Network), viewModel.uiState.value.message)
+        assertEquals(listOf("2", "3"), viewModel.uiState.value.tasks.map { it.id })
+    }
+
+    // --- FR-10 and FR-11: search and sort --------------------------------------------------------
+
+    @Test
+    fun `typing narrows the list and clearing restores it`() = runTest {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.onQueryChange("passport")
+        assertEquals(listOf("2"), viewModel.uiState.value.visibleTasks.map { it.id })
         assertEquals(TestData.tasks, viewModel.uiState.value.tasks)
+
+        viewModel.onQueryChange("")
+        assertEquals(TestData.tasks, viewModel.uiState.value.visibleTasks)
+    }
+
+    @Test
+    fun `the query ignores case`() = runTest {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.onQueryChange("PASSPORT")
+
+        assertEquals(listOf("2"), viewModel.uiState.value.visibleTasks.map { it.id })
+    }
+
+    @Test
+    fun `a query matching nothing is not the same state as having no tasks`() = runTest {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.onQueryChange("invoice")
+
+        val state = viewModel.uiState.value
+        assertTrue(state.hasNoMatches)
+        assertFalse(state.isEmpty)
+    }
+
+    @Test
+    fun `sorting by priority reorders without touching the source`() = runTest {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.onSortChange(TaskSort.PRIORITY)
+
+        val state = viewModel.uiState.value
+        assertEquals(listOf("2", "3", "1"), state.visibleTasks.map { it.id })
+        assertEquals(listOf("1", "2", "3"), state.tasks.map { it.id })
+    }
+
+    @Test
+    fun `sorting by completion puts unfinished tasks first`() = runTest {
+        val completedFirst = listOf(
+            TestData.task(id = "1", isCompleted = true),
+            TestData.task(id = "2"),
+        )
+        val viewModel = viewModel(FakeTaskRepository(source = completedFirst))
+        advanceUntilIdle()
+
+        viewModel.onSortChange(TaskSort.COMPLETION)
+
+        assertEquals(listOf("2", "1"), viewModel.uiState.value.visibleTasks.map { it.id })
+    }
+
+    @Test
+    fun `search and sort compose`() = runTest {
+        val source = listOf(
+            TestData.task(id = "1", title = "Task alpha", priority = TaskPriority.LOW),
+            TestData.task(id = "2", title = "Task beta", priority = TaskPriority.HIGH),
+            TestData.task(id = "3", title = "Other", priority = TaskPriority.HIGH),
+        )
+        val viewModel = viewModel(FakeTaskRepository(source = source))
+        advanceUntilIdle()
+
+        viewModel.onQueryChange("task")
+        viewModel.onSortChange(TaskSort.PRIORITY)
+
+        assertEquals(listOf("2", "1"), viewModel.uiState.value.visibleTasks.map { it.id })
     }
 
     private fun viewModel(repository: TaskRepository = FakeTaskRepository()) = TaskListViewModel(
@@ -119,5 +301,6 @@ class TaskListViewModelTest {
         refreshTasks = RefreshTasksUseCase(repository),
         toggleCompleted = ToggleTaskCompletedUseCase(repository),
         deleteTask = DeleteTaskUseCase(repository),
+        restoreTask = RestoreTaskUseCase(repository),
     )
 }
