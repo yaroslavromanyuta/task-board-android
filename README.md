@@ -3,17 +3,16 @@
 Multi-module Clean Architecture skeleton for a task list app: Kotlin, Jetpack Compose, Hilt,
 Navigation Compose with type-safe routes.
 
-**Delivered: iterations 0-3 - all six core requirements and four of the six stretch goals.** The app
-launches into the task list, loads the brief's seed data through a mock network source that is slow
-(300-800 ms) and fails about 15% of the time, and renders loading, empty and error+retry as real
-consequences of that source rather than as simulations. Tasks can be created, edited, completed and
-deleted, every one of them through that source. A failure that arrives with rows on screen is reported
-over the list instead of replacing it, a deleted task can be undone, the list can be searched and
-sorted, and a half-typed form survives the process being killed. Nothing in the codebase calls
-`TODO()`.
+**Complete: every core requirement and every stretch goal, across five iterations.** The app launches
+into the task list, loads the brief's seed data through a mock network source that is slow (300-800 ms)
+and fails about 15% of the time, and renders loading, empty and error+retry as real consequences of
+that source rather than as simulations. Tasks can be created, edited, completed and deleted, every one
+of them through that source. A failure that arrives with rows on screen is reported over the list
+instead of replacing it, a deleted task can be undone, the list can be searched and sorted, due dates
+read as "tomorrow" and "2 days ago", the palette holds up in both themes, and a half-typed form
+survives the process being killed.
 
-Outstanding: E7 (due dates, dark-mode audit) and E8 (walkthrough notes) - see
-[docs/BACKLOG.md](docs/BACKLOG.md).
+77 unit tests, no `TODO()` anywhere in the source, `./gradlew lint` clean.
 
 ## Module graph
 
@@ -55,7 +54,7 @@ verified by temporarily introducing the violation.
 | `:lib:tasks-api` | `Task`, `TaskPriority`, `TaskDraft`, `DataError`, `TaskRepository`, use cases |
 | `:lib:navigation-api` | `Route` — the type-safe destination contract shared by both features |
 | `:core:common` | dispatcher qualifiers + Hilt module, `Clock`, `suspendRunCatching` |
-| `:core:ui` | theme, `Loading` / `EmptyMessage` / `ErrorMessage`, `PriorityIndicator`, error wording |
+| `:core:ui` | theme, `Loading` / `EmptyMessage` / `ErrorMessage`, `PriorityIndicator`, error wording, relative dates |
 | `:core:testing` | `MainDispatcherRule`, `FakeTaskRepository`, `TestData` - pure Kotlin JVM, so `:lib` tests can use it too |
 | `:data:tasks` | `TaskApi` + `FakeTaskApi`, `SeedData`, DTOs and mappers, `InMemoryTaskCache`, `DefaultTaskRepository`, DI |
 | `:feature:task-list` | list screen: UiState, ViewModel, Route/Screen split, `TaskRow`, nav section |
@@ -67,6 +66,9 @@ verified by temporarily introducing the violation.
 - [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) — technical requirements, mock network spec, UI state
   model, traceability against the source brief.
 - [docs/BACKLOG.md](docs/BACKLOG.md) — epics, user stories, tasks, iteration plan, cut-line, risks.
+- [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) — **start here**: what shipped, why the module graph
+  exists, how the mock source produces the three states, what was consciously cut, and what would come
+  next.
 
 ## Design decisions
 
@@ -134,6 +136,12 @@ and still full of the user's work, so it arrives as a snackbar and nothing is lo
 reported as state (`isSaved`) and acted on by the route, not through a callback handed to the
 ViewModel - the save is asynchronous, and navigation belongs where the composable is.
 
+**The priority palette has a light set and a dark one, and the theme says which.** Those three colours
+sit outside the Material scheme deliberately, so that dynamic colour cannot make "high" look calmer
+than "low" - which means nothing in the scheme can adapt them either. `TodoListTheme` publishes
+`LocalIsDarkTheme` so the palette is chosen from the theme rather than from the system, and a preview
+forced into one scheme gets the matching set.
+
 **Errors are typed (`DataError`), and wording lives in `:core:ui`.** The domain module needs no
 resources and no locale; the UI decides how a failure reads.
 
@@ -168,19 +176,26 @@ To see a specific state on demand, set `FakeTaskApi.failureRate` to `0.0` or `1.
 
 ## What is tested
 
-`./gradlew test` runs 67 cases: the mock source (latency window, failure rate, `NotFound`
+`./gradlew test` runs 77 cases: the mock source (latency window, failure rate, `NotFound`
 determinism, CRUD round-trip, concurrent writes against a real dispatcher), the repository (cache
 untouched on a failed write, every failure typed as `DataException`, completion preserved across an
 edit), `SaveTaskUseCase` (validation, create-vs-update routing), `TaskListViewModel` (every branch of
 the state table, the transient-failure boundary, undo including a completed task, and the search and
 sort derivations) and `TaskEditorViewModel` (both modes, seeding, failed load with retry, failed save
 keeping the form, and a recreated process restoring the form without reloading over it). `TaskSort` and
-`RestoreTaskUseCase` are tested in the domain module, where they live.
+`RestoreTaskUseCase` are tested in the domain module, where they live, and `RelativeDate`'s arithmetic
+is pinned against a fixed "now" and a fixed time zone.
+
+## Where to start reading
+
+[docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) — the module-graph argument, the mock source, the decisions
+that were not obvious, and what was consciously cut.
 
 ## Next step
 
-Iteration 4 in [docs/BACKLOG.md](docs/BACKLOG.md) — E7, presentation: a `dueDate` on `Task` with
-relative formatting on the row and a date picker in the editor (FR-13), and a dark-mode audit of the
-priority colours (FR-14). TB-701 adds a field to the domain model and ripples through `:data:tasks` and
-both features, so it is the one remaining task that should not be started without room to finish it.
-Then E8, the walkthrough notes.
+The backlog is closed, so "next" is no longer an iteration - it is the list in
+[docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) §7, each item named against the seam it would land on: Room
+behind `InMemoryTaskCache`, a real `TaskApi` bound in `DataModule`, a sync strategy once both are real,
+paging, screenshot tests over the existing `@PreviewLightDark` previews, Compose UI tests against the
+stateless screens, CI running the same three commands each iteration was verified with, and
+accessibility verified with TalkBack rather than by inspection.
