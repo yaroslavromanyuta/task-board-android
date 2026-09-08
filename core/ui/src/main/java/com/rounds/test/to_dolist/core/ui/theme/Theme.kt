@@ -8,7 +8,17 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
+
+/**
+ * Whether the app is currently rendering dark. Material's scheme cannot answer this — a dark scheme is
+ * just a different set of colours — and the priority palette sits outside the scheme by design, so it
+ * needs to be told. Published by [TodoListTheme] rather than read from the system, so a preview forced
+ * into one scheme picks the matching palette instead of the device's.
+ */
+val LocalIsDarkTheme = staticCompositionLocalOf { false }
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -49,9 +59,11 @@ fun TodoListTheme(
         else -> LightColorScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(LocalIsDarkTheme provides darkTheme) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content,
+        )
+    }
 }

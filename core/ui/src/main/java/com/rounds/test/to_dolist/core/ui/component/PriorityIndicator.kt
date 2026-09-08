@@ -14,12 +14,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.rounds.test.to_dolist.core.ui.R
+import com.rounds.test.to_dolist.core.ui.theme.LocalIsDarkTheme
 import com.rounds.test.to_dolist.core.ui.theme.PriorityHigh
+import com.rounds.test.to_dolist.core.ui.theme.PriorityHighDark
 import com.rounds.test.to_dolist.core.ui.theme.PriorityLow
+import com.rounds.test.to_dolist.core.ui.theme.PriorityLowDark
 import com.rounds.test.to_dolist.core.ui.theme.PriorityMedium
+import com.rounds.test.to_dolist.core.ui.theme.PriorityMediumDark
 import com.rounds.test.to_dolist.core.ui.theme.TodoListTheme
 import com.rounds.test.to_dolist.tasks.model.TaskPriority
 
@@ -57,10 +61,13 @@ private fun Box(color: Color) {
 }
 
 @Composable
-private fun TaskPriority.color(): Color = when (this) {
-    TaskPriority.LOW -> PriorityLow
-    TaskPriority.MEDIUM -> PriorityMedium
-    TaskPriority.HIGH -> PriorityHigh
+private fun TaskPriority.color(): Color {
+    val dark = LocalIsDarkTheme.current
+    return when (this) {
+        TaskPriority.LOW -> if (dark) PriorityLowDark else PriorityLow
+        TaskPriority.MEDIUM -> if (dark) PriorityMediumDark else PriorityMedium
+        TaskPriority.HIGH -> if (dark) PriorityHighDark else PriorityHigh
+    }
 }
 
 private fun TaskPriority.labelRes(): Int = when (this) {
@@ -69,7 +76,7 @@ private fun TaskPriority.labelRes(): Int = when (this) {
     TaskPriority.HIGH -> R.string.core_ui_priority_high
 }
 
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
 private fun PriorityIndicatorPreview() {
     TodoListTheme(dynamicColor = false) {
