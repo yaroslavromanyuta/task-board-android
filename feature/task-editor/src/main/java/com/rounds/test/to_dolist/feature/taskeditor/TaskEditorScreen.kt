@@ -17,10 +17,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,12 +33,17 @@ import com.rounds.test.to_dolist.core.ui.component.ErrorMessage
 import com.rounds.test.to_dolist.core.ui.component.Loading
 import com.rounds.test.to_dolist.core.ui.error.asMessage
 import com.rounds.test.to_dolist.core.ui.theme.TodoListTheme
+import com.rounds.test.to_dolist.tasks.error.DataError
 import com.rounds.test.to_dolist.tasks.model.TaskPriority
 import com.rounds.test.to_dolist.core.ui.R as CoreUiR
 
 /**
  * One form for both modes. The only visible difference is the app bar title, which is why creating a
  * task and viewing/editing one are a single feature module rather than two near-identical ones.
+ *
+ * The two failure kinds are rendered differently on purpose. A failed *load* means there is nothing
+ * to edit, so the form gives way to a message and a Retry. A failed *save* means the form is still
+ * good and still full of the user's work, so it is reported over the top and nothing is lost (FR-02).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,10 +55,22 @@ fun TaskEditorScreen(
     onSave: () -> Unit,
     onBack: () -> Unit,
     onRetry: () -> Unit,
+    onSaveErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val saveErrorMessage = state.saveError?.asMessage()
+
+    LaunchedEffect(saveErrorMessage) {
+        if (saveErrorMessage != null) {
+            snackbarHostState.showSnackbar(saveErrorMessage)
+            onSaveErrorShown()
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -171,6 +192,47 @@ private fun TaskEditorCreatePreview() {
             onSave = {},
             onBack = {},
             onRetry = {},
+            onSaveErrorShown = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun TaskEditorEditPreview() {
+    TodoListTheme(dynamicColor = false) {
+        TaskEditorScreen(
+            state = TaskEditorUiState(
+                taskId = "task-1",
+                title = "Renew domain registration",
+                notes = "Expires end of month",
+                priority = TaskPriority.HIGH,
+            ),
+            onTitleChange = {},
+            onNotesChange = {},
+            onPriorityChange = {},
+            onSave = {},
+            onBack = {},
+            onRetry = {},
+            onSaveErrorShown = {},
+        )
+    }
+}
+
+/** The edit-mode load failed: there is nothing to edit, so the form gives way entirely. */
+@Preview(showBackground = true)
+@Composable
+private fun TaskEditorLoadErrorPreview() {
+    TodoListTheme(dynamicColor = false) {
+        TaskEditorScreen(
+            state = TaskEditorUiState(taskId = "task-1", error = DataError.NotFound),
+            onTitleChange = {},
+            onNotesChange = {},
+            onPriorityChange = {},
+            onSave = {},
+            onBack = {},
+            onRetry = {},
+            onSaveErrorShown = {},
         )
     }
 }

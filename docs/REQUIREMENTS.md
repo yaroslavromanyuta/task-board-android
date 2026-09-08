@@ -10,7 +10,7 @@
 | Retrieved | 2026-09-08 |
 | Status | Baselined |
 | Companion document | [BACKLOG.md](BACKLOG.md) — epics, stories, tasks, iterations |
-| Implementation status | Iterations 0 (foundation) and 1 (read path: E1–E3) delivered; see [../README.md](../README.md) |
+| Implementation status | Iterations 0 (foundation), 1 (read path: E1–E3) and 2 (write path: E4) delivered; all six core requirements closed. See [../README.md](../README.md) |
 
 Requirement IDs in this document are stable. `BACKLOG.md` references them; do not renumber.
 
@@ -213,9 +213,20 @@ transiently (snackbar) instead. That boundary belongs to FR-09 and is scheduled 
 | Create | `Route.TaskEditor(taskId = null)` | Empty form, priority `MEDIUM` |
 | Edit | `Route.TaskEditor(taskId = "…")` | `Loading`, then the form seeded from `GetTaskUseCase` |
 
-Validation: `canSave` requires a non-blank title and no save or load in flight. A blank title on save
-sets `titleError` and does not navigate. `titleError` is deliberately separate from `error`: the
-first is a form problem the user fixes in place, the second is a data failure needing a retry.
+Validation: `canSave` requires a non-blank title and no save or load in flight, and is the button's
+affordance only — the rule itself lives in `SaveTaskUseCase`, which returns
+`ValidationException.BlankTitle`; the ViewModel maps that onto `titleError` and does not navigate.
+
+Three failure fields, because the screen has to do something different with each:
+
+| Field | Meaning | Rendered |
+|---|---|---|
+| `titleError` | a form problem the user fixes in place | the title field goes into its error state |
+| `error` | the edit-mode load failed; there is nothing to edit | the form is replaced by a message and Retry |
+| `saveError` | the save failed while the form is still good | a snackbar over the form; nothing typed is lost (FR-02) |
+
+Success is reported as `isSaved` on the state and acted on by the route, not through a callback handed
+to the ViewModel: the save is asynchronous, and navigation belongs where the composable is.
 
 ## 10. Architecture constraints
 

@@ -14,5 +14,19 @@ sealed interface Route {
 
     /** [taskId] null means "create a new task"; a non-null id opens that task for viewing and editing. */
     @Serializable
-    data class TaskEditor(val taskId: String? = null) : Route
+    data class TaskEditor(val taskId: String? = null) : Route {
+
+        companion object {
+            /**
+             * The name this destination's one argument is stored under. Navigation derives it from the
+             * property name, so a screen can read the argument straight out of `SavedStateHandle`
+             * instead of going through `toRoute()`, which needs an Android runtime to decode and
+             * therefore cannot be exercised by a JVM unit test.
+             *
+             * `RouteTest` asserts this constant still matches the serialised property, so the two
+             * cannot drift apart silently.
+             */
+            const val TASK_ID_ARG = "taskId"
+        }
+    }
 }
