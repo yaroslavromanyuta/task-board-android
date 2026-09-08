@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -201,7 +202,9 @@ private fun DueDateField(
     dueDate: Instant?,
     onDueDateChange: (Instant?) -> Unit,
 ) {
-    var picking by remember { mutableStateOf(false) }
+    // Saveable, not remembered: rotating with the picker open used to close it and drop the
+    // date the user had highlighted, while the form behind it survived (NFR-06).
+    var picking by rememberSaveable { mutableStateOf(false) }
     val now = remember { Instant.now() }
 
     Row(

@@ -21,6 +21,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -168,6 +169,9 @@ private fun SnackbarEffect(
         val result = hostState.showSnackbar(
             message = text,
             actionLabel = if (message is TaskListMessage.TaskDeleted) undoLabel else null,
+            // Stated rather than defaulted: Material3 reads an action label as a reason to stay
+            // Indefinite, which left the undo offer parked over the list until it was swiped away.
+            duration = SnackbarDuration.Long,
         )
 
         if (result == SnackbarResult.ActionPerformed && message is TaskListMessage.TaskDeleted) {

@@ -5,6 +5,7 @@
     <string name="task_list_action_add">Add task</string>
     <string name="task_list_action_delete">Delete task</string>
     <string name="task_list_action_toggle">Mark complete</string>
+    <string name="task_list_action_toggle_done">Mark incomplete</string>
 
     <string name="task_list_search_hint">Search by title</string>
     <string name="task_list_action_clear_search">Clear search</string>
