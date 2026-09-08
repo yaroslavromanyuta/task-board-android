@@ -40,13 +40,14 @@ acceptance criterion, and every dependency is done.
 | E1 | Mock network layer | FR-06, NFR-01…NFR-05 | 16 | ☑ done |
 | E2 | Data layer: cache, repository, use cases | FR-06, NFR-04, NFR-13 | 18 | ☑ done |
 | E3 | Task list screen | FR-01, FR-03, FR-04, FR-07…FR-09 | 18 | ☑ done |
-| E4 | Task detail / edit screen | FR-02, FR-05 | 13 | ☐ |
+| E4 | Task detail / edit screen | FR-02, FR-05 | 13 | ☑ done |
 | E5 | Resilience and state handling | FR-12, NFR-06, NFR-07 | 16 | ☐ |
 | E6 | Stretch: list shaping | FR-10, FR-11 | 11 | ☐ |
 | E7 | Stretch: presentation | FR-13, FR-14 | 16 | ☐ |
 | E8 | Handover: documentation and walkthrough | §4, brief closing section | 5 | ☐ |
 
-Total open: 61 points across E4–E8. E1–E3 (52 points) delivered in iteration 1.
+Total open: 48 points across E5–E8. E1–E3 (52 points) delivered in iteration 1, E4 (13 points) in
+iteration 2. The brief's six core requirements are all closed.
 
 ## 3. Iteration plan
 
@@ -57,7 +58,7 @@ iteration boundary and still leave a coherent product.
 |---|---|---|---|---|
 | 0 | Walking skeleton | E0 | 21 ☑ | App runs, navigates list → editor → back, renders the empty state |
 | 1 | Read path | E1, E2, E3 | 52 ☑ | List loads real seed data with a spinner; failures show an error with Retry; complete and delete work from the list |
-| 2 | Write path | E4 | 13 | Create and edit against the mock source, completing full CRUD |
+| 2 | Write path | E4 | 13 ☑ | Create and edit against the mock source, completing full CRUD |
 | 3 | Resilience | E5 | 16 | Write failures surfaced without blanking the list; undo delete; survives rotation and process death |
 | 4 | Stretch | E6, E7 | 27 | Search, sort, due dates, dark mode |
 | 5 | Handover | E8 | 5 | README, deviation rationale, "what I would do next" |
@@ -175,7 +176,7 @@ Requirements: FR-01, FR-03, FR-04, FR-07, FR-08, FR-09. State model: REQUIREMENT
 
 ---
 
-### E4 — Task detail / edit screen
+### E4 — Task detail / edit screen ☑ delivered
 
 Requirements: FR-02, FR-05.
 
@@ -190,10 +191,10 @@ Requirements: FR-02, FR-05.
 
 | ID | Task | Module / file | Pts | Depends on | Acceptance |
 |---|---|---|---|---|---|
-| TB-401 | Implement the edit-mode load: when `route.taskId != null`, call `GetTaskUseCase`, show `Loading`, seed the form, map failure to `state.error`. Implement `onRetry` to re-run it. | `feature/task-editor/.../TaskEditorViewModel.kt` | 3 | TB-205 | Editing an existing task shows its current values (FR-05). |
-| TB-402 | Implement `onSave` through `SaveTaskUseCase`: set `isSaving`, report success only on `Result.success`, surface failure as `state.error` without navigating away. | `feature/task-editor/.../TaskEditorViewModel.kt` | 3 | TB-205 | A failed save does not lose the user's input (FR-02). |
-| TB-403 | Confirm create and edit both round-trip end to end through navigation; the list reflects the change on return. | `app/.../navigation/TodoNavHost.kt`, both feature modules | 2 | TB-401, TB-402, TB-301 | Add and edit are both visible in the list without a manual refresh. |
-| TB-404 | Unit-test `TaskEditorViewModel`: create mode, edit mode seeding, blank-title validation, save failure keeps the form, `SavedStateHandle` argument reading. | `feature/task-editor/src/test/.../TaskEditorViewModelTest.kt` (new) | 5 | TB-401, TB-402, TB-206 | Both modes covered from one test class. |
+| TB-401 ☑ | Implement the edit-mode load: when `route.taskId != null`, call `GetTaskUseCase`, show `Loading`, seed the form, map failure to `state.error`. Implement `onRetry` to re-run it. | `feature/task-editor/.../TaskEditorViewModel.kt` | 3 | TB-205 | Editing an existing task shows its current values (FR-05). |
+| TB-402 ☑ | Implement `onSave` through `SaveTaskUseCase`: set `isSaving`, report success only on `Result.success`, surface failure as `state.error` without navigating away. | `feature/task-editor/.../TaskEditorViewModel.kt` | 3 | TB-205 | A failed save does not lose the user's input (FR-02). |
+| TB-403 ☑ | Confirm create and edit both round-trip end to end through navigation; the list reflects the change on return. | `app/.../navigation/TodoNavHost.kt`, both feature modules | 2 | TB-401, TB-402, TB-301 | Add and edit are both visible in the list without a manual refresh. |
+| TB-404 ☑ | Unit-test `TaskEditorViewModel`: create mode, edit mode seeding, blank-title validation, save failure keeps the form, `SavedStateHandle` argument reading. | `feature/task-editor/src/test/.../TaskEditorViewModelTest.kt` (new) | 5 | TB-401, TB-402, TB-206 | Both modes covered from one test class. |
 
 ---
 
