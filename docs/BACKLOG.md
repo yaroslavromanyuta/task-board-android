@@ -37,16 +37,16 @@ acceptance criterion, and every dependency is done.
 | ID | Epic | Requirements | Points | Status |
 |---|---|---|---|---|
 | E0 | Project foundation and architecture | D-1…D-4, NFR-10, NFR-12 | 21 | ☑ done |
-| E1 | Mock network layer | FR-06, NFR-01…NFR-05 | 16 | ☐ |
-| E2 | Data layer: cache, repository, use cases | FR-06, NFR-04, NFR-13 | 18 | ☐ |
-| E3 | Task list screen | FR-01, FR-03, FR-04, FR-07…FR-09 | 18 | ☐ |
+| E1 | Mock network layer | FR-06, NFR-01…NFR-05 | 16 | ☑ done |
+| E2 | Data layer: cache, repository, use cases | FR-06, NFR-04, NFR-13 | 18 | ☑ done |
+| E3 | Task list screen | FR-01, FR-03, FR-04, FR-07…FR-09 | 18 | ☑ done |
 | E4 | Task detail / edit screen | FR-02, FR-05 | 13 | ☐ |
 | E5 | Resilience and state handling | FR-12, NFR-06, NFR-07 | 16 | ☐ |
 | E6 | Stretch: list shaping | FR-10, FR-11 | 11 | ☐ |
 | E7 | Stretch: presentation | FR-13, FR-14 | 16 | ☐ |
 | E8 | Handover: documentation and walkthrough | §4, brief closing section | 5 | ☐ |
 
-Total open: 113 points across E1–E8.
+Total open: 61 points across E4–E8. E1–E3 (52 points) delivered in iteration 1.
 
 ## 3. Iteration plan
 
@@ -56,14 +56,19 @@ iteration boundary and still leave a coherent product.
 | Iteration | Goal | Epics | Points | Demo at the end |
 |---|---|---|---|---|
 | 0 | Walking skeleton | E0 | 21 ☑ | App runs, navigates list → editor → back, renders the empty state |
-| 1 | Read path | E1, E2 (read), E3 | 44 | List loads real seed data with a spinner; failures show an error with Retry |
-| 2 | Write path | E2 (write), E4 | 21 | Create, edit, complete, delete — full CRUD against the mock source |
+| 1 | Read path | E1, E2, E3 | 52 ☑ | List loads real seed data with a spinner; failures show an error with Retry; complete and delete work from the list |
+| 2 | Write path | E4 | 13 | Create and edit against the mock source, completing full CRUD |
 | 3 | Resilience | E5 | 16 | Write failures surfaced without blanking the list; undo delete; survives rotation and process death |
 | 4 | Stretch | E6, E7 | 27 | Search, sort, due dates, dark mode |
 | 5 | Handover | E8 | 5 | README, deviation rationale, "what I would do next" |
 
 **Iteration 1 is deliberately the largest.** It is the vertical slice that turns the skeleton into a
 working product; nothing after it is meaningful without it.
+
+**E2's write half moved into iteration 1.** TB-305 and TB-306 complete and delete a task straight from
+the list, and neither works without `DefaultTaskRepository`'s write methods. Splitting one file across
+two pull requests bought nothing, so TB-204 shipped with the rest of E2 and iteration 2 is now E4
+alone.
 
 ## 4. Cut-line
 
@@ -97,7 +102,7 @@ Iteration 0, already in the repo. Recorded for traceability; see [../README.md](
 
 ---
 
-### E1 — Mock network layer
+### E1 — Mock network layer ☑ delivered
 
 Requirements: FR-06, NFR-01, NFR-02, NFR-03, NFR-05. Specification: REQUIREMENTS.md §8.
 
@@ -110,15 +115,15 @@ Requirements: FR-06, NFR-01, NFR-02, NFR-03, NFR-05. Specification: REQUIREMENTS
 
 | ID | Task | Module / file | Pts | Depends on | Acceptance |
 |---|---|---|---|---|---|
-| TB-101 | Implement latency and failure injection: uniform 300–800 ms delay on reads, ~15% failure on read and write, injected `Random` and `Clock`, configurable failure rate. Correct the stale planning comment (it says 200–900 ms and 1-in-7). | `data/tasks/.../api/FakeTaskApi.kt` | 3 | — | Timings and rate match REQUIREMENTS.md §8. Rate is settable to 0. |
-| TB-102 | Implement the five `TaskApi` operations over a `MutableList<TaskDto>` guarded by a `Mutex`; source-assigned ids; `createdAt` from the injected `Clock`. | `data/tasks/.../api/FakeTaskApi.kt` | 5 | TB-101 | All five operations round-trip. Concurrent calls do not corrupt the store. |
-| TB-103 | Seed the store with the brief's four rows, verbatim, long title included. | `data/tasks/.../api/FakeTaskApi.kt` (or a new `SeedData.kt`) | 1 | TB-102 | Contents match REQUIREMENTS.md §8 exactly. |
-| TB-104 | Map thrown failures to `DataError`: dice → `Network`, unknown id → `NotFound` (deterministic, never random). | `data/tasks/.../api/FakeTaskApi.kt` | 2 | TB-102 | Every throw is a `DataException` with a mapped `DataError`. |
-| TB-105 | Unit-test `FakeTaskApi` with a seeded `Random` and `TestDispatcher`: latency window, failure rate over N calls, `NotFound` determinism, CRUD round-trip. | `data/tasks/src/test/.../FakeTaskApiTest.kt` (new) | 5 | TB-102, TB-104 | Deterministic — no test depends on the dice (NFR-05). |
+| TB-101 ☑ | Implement latency and failure injection: uniform 300–800 ms delay on reads, ~15% failure on read and write, injected `Random` and `Clock`, configurable failure rate. Correct the stale planning comment (it says 200–900 ms and 1-in-7). | `data/tasks/.../api/FakeTaskApi.kt` | 3 | — | Timings and rate match REQUIREMENTS.md §8. Rate is settable to 0. |
+| TB-102 ☑ | Implement the five `TaskApi` operations over a `MutableList<TaskDto>` guarded by a `Mutex`; source-assigned ids; `createdAt` from the injected `Clock`. | `data/tasks/.../api/FakeTaskApi.kt` | 5 | TB-101 | All five operations round-trip. Concurrent calls do not corrupt the store. |
+| TB-103 ☑ | Seed the store with the brief's four rows, verbatim, long title included. | `data/tasks/.../api/FakeTaskApi.kt` (or a new `SeedData.kt`) | 1 | TB-102 | Contents match REQUIREMENTS.md §8 exactly. |
+| TB-104 ☑ | Map thrown failures to `DataError`: dice → `Network`, unknown id → `NotFound` (deterministic, never random). | `data/tasks/.../api/FakeTaskApi.kt` | 2 | TB-102 | Every throw is a `DataException` with a mapped `DataError`. |
+| TB-105 ☑ | Unit-test `FakeTaskApi` with a seeded `Random` and `TestDispatcher`: latency window, failure rate over N calls, `NotFound` determinism, CRUD round-trip. | `data/tasks/src/test/.../FakeTaskApiTest.kt` (new) | 5 | TB-102, TB-104 | Deterministic — no test depends on the dice (NFR-05). |
 
 ---
 
-### E2 — Data layer: cache, repository, use cases
+### E2 — Data layer: cache, repository, use cases ☑ delivered
 
 Requirements: FR-06, NFR-01, NFR-04, NFR-13.
 
@@ -131,16 +136,16 @@ Requirements: FR-06, NFR-01, NFR-04, NFR-13.
 
 | ID | Task | Module / file | Pts | Depends on | Acceptance |
 |---|---|---|---|---|---|
-| TB-201 | Implement `InMemoryTaskCache.replaceAll` / `upsert` / `remove` over the existing `MutableStateFlow`. | `data/tasks/.../cache/InMemoryTaskCache.kt` | 2 | — | Emissions are observed by `observe()`. `upsert` replaces by id, never duplicates. |
-| TB-202 | Implement `TaskDto.toDomain()` and `TaskDraft.toPayload()`. An unknown priority string falls back rather than throwing. | `data/tasks/.../mapper/TaskMapper.kt` | 2 | — | Round-trips. Unknown priority maps to `MEDIUM` and does not crash the list. |
-| TB-203 | Implement the read half of `DefaultTaskRepository`: `observeTasks()` from the cache, `refresh()` and `getTask()` through the API on the injected IO dispatcher, wrapped in `suspendRunCatching`. | `data/tasks/.../repository/DefaultTaskRepository.kt` | 3 | TB-101…TB-104, TB-201, TB-202 | Returns `Result`; failures are always `DataException` (NFR-04). |
-| TB-204 | Implement the write half: `createTask`, `updateTask`, `setCompleted`, `deleteTask`. API first, cache updated only on success. | `data/tasks/.../repository/DefaultTaskRepository.kt` | 3 | TB-203 | A failed write leaves the cache unchanged. |
-| TB-205 | Implement the six use cases. `SaveTaskUseCase` owns title validation (blank title is rejected here, not in the ViewModel) and routes create vs. update on a null id. `ObserveTasksUseCase` owns default ordering. | `lib/tasks-api/.../usecase/*.kt` | 3 | TB-203, TB-204 | Validation lives in exactly one place. |
-| TB-206 | Complete `FakeTaskRepository` in `:core:testing` (its `nextError` and `fail()` exist for this) and unit-test `DefaultTaskRepository` and `SaveTaskUseCase`: cache-untouched-on-failure, validation, create-vs-update routing. | `core/testing/.../FakeTaskRepository.kt`, `data/tasks/src/test/.../DefaultTaskRepositoryTest.kt` (new), `lib/tasks-api/src/test/.../SaveTaskUseCaseTest.kt` (new) | 5 | TB-205 | `./gradlew test` green. `FakeTaskRepository` has no `TODO()` left. |
+| TB-201 ☑ | Implement `InMemoryTaskCache.replaceAll` / `upsert` / `remove` over the existing `MutableStateFlow`. | `data/tasks/.../cache/InMemoryTaskCache.kt` | 2 | — | Emissions are observed by `observe()`. `upsert` replaces by id, never duplicates. |
+| TB-202 ☑ | Implement `TaskDto.toDomain()` and `TaskDraft.toPayload()`. An unknown priority string falls back rather than throwing. | `data/tasks/.../mapper/TaskMapper.kt` | 2 | — | Round-trips. Unknown priority maps to `MEDIUM` and does not crash the list. |
+| TB-203 ☑ | Implement the read half of `DefaultTaskRepository`: `observeTasks()` from the cache, `refresh()` and `getTask()` through the API on the injected IO dispatcher, wrapped in `suspendRunCatching`. | `data/tasks/.../repository/DefaultTaskRepository.kt` | 3 | TB-101…TB-104, TB-201, TB-202 | Returns `Result`; failures are always `DataException` (NFR-04). |
+| TB-204 ☑ | Implement the write half: `createTask`, `updateTask`, `setCompleted`, `deleteTask`. API first, cache updated only on success. | `data/tasks/.../repository/DefaultTaskRepository.kt` | 3 | TB-203 | A failed write leaves the cache unchanged. |
+| TB-205 ☑ | Implement the six use cases. `SaveTaskUseCase` owns title validation (blank title is rejected here, not in the ViewModel) and routes create vs. update on a null id. `ObserveTasksUseCase` owns default ordering. | `lib/tasks-api/.../usecase/*.kt` | 3 | TB-203, TB-204 | Validation lives in exactly one place. |
+| TB-206 ☑ | Complete `FakeTaskRepository` in `:core:testing` (its `nextError` and `fail()` exist for this) and unit-test `DefaultTaskRepository` and `SaveTaskUseCase`: cache-untouched-on-failure, validation, create-vs-update routing. | `core/testing/.../FakeTaskRepository.kt`, `data/tasks/src/test/.../DefaultTaskRepositoryTest.kt` (new), `lib/tasks-api/src/test/.../SaveTaskUseCaseTest.kt` (new) | 5 | TB-205 | `./gradlew test` green. `FakeTaskRepository` has no `TODO()` left. |
 
 ---
 
-### E3 — Task list screen
+### E3 — Task list screen ☑ delivered
 
 Requirements: FR-01, FR-03, FR-04, FR-07, FR-08, FR-09. State model: REQUIREMENTS.md §9.
 
@@ -159,14 +164,14 @@ Requirements: FR-01, FR-03, FR-04, FR-07, FR-08, FR-09. State model: REQUIREMENT
 
 | ID | Task | Module / file | Pts | Depends on | Acceptance |
 |---|---|---|---|---|---|
-| TB-301 | Collect `ObserveTasksUseCase` into `TaskListUiState` in `viewModelScope`; trigger the first `refresh()` on init. | `feature/task-list/.../TaskListViewModel.kt` | 3 | TB-205 | The list renders seed data on launch. |
-| TB-302 | Implement `onRetry`: set `isLoading`, call `RefreshTasksUseCase`, map failure to `state.error`, clear it on success. | `feature/task-list/.../TaskListViewModel.kt` | 2 | TB-301 | The four-state precedence table in REQUIREMENTS.md §9 holds. |
-| TB-303 | Verify `TaskListScreen` against the real states, including the long-title row; fix any layout or truncation defect the seed data exposes. | `feature/task-list/.../TaskListScreen.kt`, `component/TaskRow.kt` | 2 | TB-301 | The long title truncates cleanly; the row does not grow unbounded (FR-01). |
-| TB-304 | Confirm keyed rows and stable recomposition on the populated list. | `feature/task-list/.../TaskListScreen.kt` | 1 | TB-303 | `key = { it.id }` present; toggling one row does not recompose the whole list (NFR-08). |
-| TB-305 | Implement `onToggleCompleted` through `ToggleTaskCompletedUseCase`. | `feature/task-list/.../TaskListViewModel.kt` | 2 | TB-205 | The row updates and the change survives a refresh (FR-03). |
-| TB-306 | Implement `onDelete` through `DeleteTaskUseCase`. | `feature/task-list/.../TaskListViewModel.kt` | 2 | TB-205 | The task disappears and stays gone after a refresh (FR-04). |
-| TB-307 | Unit-test `TaskListViewModel` with `FakeTaskRepository` + `MainDispatcherRule` + Turbine: loading → content, loading → error → retry → content, empty, toggle, delete. | `feature/task-list/src/test/.../TaskListViewModelTest.kt` (new) | 5 | TB-302, TB-305, TB-306, TB-206 | Every branch of the state table has a test. |
-| TB-308 | Verify accessibility on the list: priority label read out, delete and checkbox described. | `feature/task-list/…`, `core/ui/.../PriorityIndicator.kt` | 1 | TB-303 | NFR-09 satisfied. |
+| TB-301 ☑ | Collect `ObserveTasksUseCase` into `TaskListUiState` in `viewModelScope`; trigger the first `refresh()` on init. | `feature/task-list/.../TaskListViewModel.kt` | 3 | TB-205 | The list renders seed data on launch. |
+| TB-302 ☑ | Implement `onRetry`: set `isLoading`, call `RefreshTasksUseCase`, map failure to `state.error`, clear it on success. | `feature/task-list/.../TaskListViewModel.kt` | 2 | TB-301 | The four-state precedence table in REQUIREMENTS.md §9 holds. |
+| TB-303 ☑ | Verify `TaskListScreen` against the real states, including the long-title row; fix any layout or truncation defect the seed data exposes. | `feature/task-list/.../TaskListScreen.kt`, `component/TaskRow.kt` | 2 | TB-301 | The long title truncates cleanly; the row does not grow unbounded (FR-01). |
+| TB-304 ☑ | Confirm keyed rows and stable recomposition on the populated list. | `feature/task-list/.../TaskListScreen.kt` | 1 | TB-303 | `key = { it.id }` present; toggling one row does not recompose the whole list (NFR-08). |
+| TB-305 ☑ | Implement `onToggleCompleted` through `ToggleTaskCompletedUseCase`. | `feature/task-list/.../TaskListViewModel.kt` | 2 | TB-205 | The row updates and the change survives a refresh (FR-03). |
+| TB-306 ☑ | Implement `onDelete` through `DeleteTaskUseCase`. | `feature/task-list/.../TaskListViewModel.kt` | 2 | TB-205 | The task disappears and stays gone after a refresh (FR-04). |
+| TB-307 ☑ | Unit-test `TaskListViewModel` with `FakeTaskRepository` + `MainDispatcherRule` + Turbine: loading → content, loading → error → retry → content, empty, toggle, delete. | `feature/task-list/src/test/.../TaskListViewModelTest.kt` (new) | 5 | TB-302, TB-305, TB-306, TB-206 | Every branch of the state table has a test. |
+| TB-308 ☑ | Verify accessibility on the list: priority label read out, delete and checkbox described. | `feature/task-list/…`, `core/ui/.../PriorityIndicator.kt` | 1 | TB-303 | NFR-09 satisfied. |
 
 ---
 

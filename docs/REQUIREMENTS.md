@@ -10,7 +10,7 @@
 | Retrieved | 2026-09-08 |
 | Status | Baselined |
 | Companion document | [BACKLOG.md](BACKLOG.md) — epics, stories, tasks, iterations |
-| Implementation status | Iteration 0 (foundation) delivered; see [../README.md](../README.md) |
+| Implementation status | Iterations 0 (foundation) and 1 (read path: E1–E3) delivered; see [../README.md](../README.md) |
 
 Requirement IDs in this document are stable. `BACKLOG.md` references them; do not renumber.
 
@@ -139,6 +139,11 @@ suspend fun deleteTask(id: String)
 
 It speaks DTOs, never domain models, and it signals failure by throwing, the way a transport does.
 
+There is deliberately no "set completed" operation: five REST-shaped calls are the whole contract, so
+`TaskPayload` carries `completed` alongside the editable fields and completing a task is an update
+like any other. The repository is what makes that invisible above the data layer — `setCompleted(id,
+completed)` reads the task's current fields and sends them back with the flag changed.
+
 ### Behaviour
 
 | Aspect | Specification | Source |
@@ -151,8 +156,9 @@ It speaks DTOs, never domain models, and it signals failure by throwing, the way
 | Determinism | `Random` is injected; tests seed it | NFR-05 |
 | Demo switch | The failure rate is configurable so it can be set to 0 for a live demo | Risk R-1 |
 
-> The planning comment currently in `FakeTaskApi.kt` says 200–900 ms and roughly 1-in-7. It predates
-> the full brief and is wrong. Correcting it is task **TB-101**.
+> The planning comment in `FakeTaskApi.kt` used to say 200–900 ms and roughly 1-in-7. It predated the
+> full brief and was wrong; TB-101 corrected it to the table above. `FakeTaskApi.failureRate` is a
+> `var` defaulting to `0.15`, so a demo can set it to `0.0` or `1.0` on cue (risk R-1).
 
 ### Error taxonomy
 
