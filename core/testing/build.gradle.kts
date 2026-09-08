@@ -1,9 +1,5 @@
 plugins {
-    id("todo.android.library")
-}
-
-android {
-    namespace = "com.rounds.test.to_dolist.core.testing"
+    id("todo.jvm.library")
 }
 
 dependencies {
