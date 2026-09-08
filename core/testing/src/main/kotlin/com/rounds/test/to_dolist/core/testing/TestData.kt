@@ -16,6 +16,7 @@ object TestData {
         priority: TaskPriority = TaskPriority.MEDIUM,
         isCompleted: Boolean = false,
         createdAt: Instant = epoch,
+        dueDate: Instant? = null,
     ) = Task(
         id = id,
         title = title,
@@ -23,6 +24,7 @@ object TestData {
         priority = priority,
         isCompleted = isCompleted,
         createdAt = createdAt,
+        dueDate = dueDate,
     )
 
     val tasks: List<Task> = listOf(

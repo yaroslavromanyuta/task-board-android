@@ -42,7 +42,7 @@ class FakeTaskApi @Inject constructor(
 
     init {
         SEED_TASKS.forEach { seed ->
-            store += seed.toDto(id = newId(), createdAtEpochMillis = clock.now().toEpochMilli())
+            store += seed.toDto(id = newId(), createdAt = clock.now())
         }
     }
 
@@ -58,6 +58,7 @@ class FakeTaskApi @Inject constructor(
             priority = payload.priority,
             completed = payload.completed,
             createdAtEpochMillis = clock.now().toEpochMilli(),
+            dueDateEpochMillis = payload.dueDateEpochMillis,
         ).also { store += it }
     }
 
@@ -69,6 +70,7 @@ class FakeTaskApi @Inject constructor(
             notes = payload.notes,
             priority = payload.priority,
             completed = payload.completed,
+            dueDateEpochMillis = payload.dueDateEpochMillis,
         ).also { store[index] = it }
     }
 

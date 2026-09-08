@@ -43,12 +43,12 @@ acceptance criterion, and every dependency is done.
 | E4 | Task detail / edit screen | FR-02, FR-05 | 13 | ☑ done |
 | E5 | Resilience and state handling | FR-12, NFR-06, NFR-07 | 16 | ☑ done |
 | E6 | Stretch: list shaping | FR-10, FR-11 | 11 | ☑ done |
-| E7 | Stretch: presentation | FR-13, FR-14 | 16 | ☐ |
-| E8 | Handover: documentation and walkthrough | §4, brief closing section | 5 | ☐ |
+| E7 | Stretch: presentation | FR-13, FR-14 | 16 | ☑ done |
+| E8 | Handover: documentation and walkthrough | §4, brief closing section | 5 | ☑ done |
 
-Total open: 21 points across E7 and E8. E1–E3 (52 points) delivered in iteration 1, E4 (13 points) in
-iteration 2, E5 and E6 (27 points) in iteration 3. The brief's six core requirements and four of its
-six stretch goals are closed.
+**Nothing open.** All 134 points delivered: E1–E3 (52) in iteration 1, E4 (13) in iteration 2, E5 and
+E6 (27) in iteration 3, E7 (16) in iteration 4 and E8 (5) in iteration 5, on top of E0's 21. Every core
+requirement and every stretch goal is closed.
 
 ## 3. Iteration plan
 
@@ -61,8 +61,8 @@ iteration boundary and still leave a coherent product.
 | 1 | Read path | E1, E2, E3 | 52 ☑ | List loads real seed data with a spinner; failures show an error with Retry; complete and delete work from the list |
 | 2 | Write path | E4 | 13 ☑ | Create and edit against the mock source, completing full CRUD |
 | 3 | Resilience and list shaping | E5, E6 | 27 ☑ | Write failures surfaced without blanking the list; undo delete; survives rotation and process death; search and sort |
-| 4 | Stretch: presentation | E7 | 16 | Due dates, dark mode |
-| 5 | Handover | E8 | 5 | README, deviation rationale, "what I would do next" |
+| 4 | Stretch: presentation | E7 | 16 ☑ | Due dates, dark mode |
+| 5 | Handover | E8 | 5 ☑ | README, deviation rationale, "what I would do next" |
 
 **Iteration 1 is deliberately the largest.** It is the vertical slice that turns the skeleton into a
 working product; nothing after it is meaningful without it.
@@ -238,7 +238,7 @@ Requirements: FR-10, FR-11.
 
 ---
 
-### E7 — Stretch: presentation
+### E7 — Stretch: presentation ☑ delivered
 
 Requirements: FR-13, FR-14.
 
@@ -253,25 +253,25 @@ Requirements: FR-13, FR-14.
 
 | ID | Task | Module / file | Pts | Depends on | Acceptance |
 |---|---|---|---|---|---|
-| TB-701 | Add `dueDate: Instant?` to `Task` and `TaskDraft`; extend `TaskDto`/`TaskPayload` and the mapper; extend the seed rows. | `lib/tasks-api/.../model/`, `data/tasks/.../api/model/`, `mapper/`, seed | 5 | E6 complete | The whole graph compiles; existing tests still pass. |
-| TB-702 | Relative date formatting helper. | `core/ui/.../format/RelativeDate.kt` (new) | 3 | TB-701 | "tomorrow", "in 3 days", "2 days ago"; unit-tested against a fixed `Clock`. |
-| TB-703 | Show the due date on the list row. | `feature/task-list/.../component/TaskRow.kt` | 2 | TB-702 | Renders; absent date renders nothing, not "null" (FR-13). |
-| TB-704 | Date picker in the editor. | `feature/task-editor/.../TaskEditorScreen.kt` | 3 | TB-701 | Set and clear both work. |
-| TB-705 | Audit dark mode: verify the theme in both schemes and check the priority colours hold their contrast. | `core/ui/.../theme/` | 2 | — | Legible in both; priority colours stay distinguishable (FR-14). |
-| TB-706 | Add dark-mode previews for the shared components and both screens. | `core/ui/…`, both feature modules | 1 | TB-705 | Each screen has a light and a dark preview. |
+| TB-701 ☑ | Add `dueDate: Instant?` to `Task` and `TaskDraft`; extend `TaskDto`/`TaskPayload` and the mapper; extend the seed rows. | `lib/tasks-api/.../model/`, `data/tasks/.../api/model/`, `mapper/`, seed | 5 | E6 complete | The whole graph compiles; existing tests still pass. |
+| TB-702 ☑ | Relative date formatting helper. | `core/ui/.../format/RelativeDate.kt` (new) | 3 | TB-701 | "tomorrow", "in 3 days", "2 days ago"; unit-tested against a fixed `Clock`. |
+| TB-703 ☑ | Show the due date on the list row. | `feature/task-list/.../component/TaskRow.kt` | 2 | TB-702 | Renders; absent date renders nothing, not "null" (FR-13). |
+| TB-704 ☑ | Date picker in the editor. | `feature/task-editor/.../TaskEditorScreen.kt` | 3 | TB-701 | Set and clear both work. |
+| TB-705 ☑ | Audit dark mode: verify the theme in both schemes and check the priority colours hold their contrast. | `core/ui/.../theme/` | 2 | — | Legible in both; priority colours stay distinguishable (FR-14). |
+| TB-706 ☑ | Add dark-mode previews for the shared components and both screens. | `core/ui/…`, both feature modules | 1 | TB-705 | Each screen has a light and a dark preview. |
 
 ---
 
-### E8 — Handover: documentation and walkthrough
+### E8 — Handover: documentation and walkthrough ☑ delivered
 
 The brief allocates ~10 minutes to explaining what was built and what would come next, and asks for
 the reasoning behind any deliberate deviation. That is deliverable work, not an afterthought.
 
 | ID | Task | File | Pts | Depends on | Acceptance |
 |---|---|---|---|---|---|
-| TB-801 | Update `README.md` to reflect the delivered state: which iterations landed, what is stubbed, and the deviation rationale from REQUIREMENTS.md §4. | `README.md` | 2 | last shipped iteration | Someone cloning the repo can tell what works without running it. |
-| TB-802 | Write walkthrough notes: the module-graph story, why multi-module, why in-memory, how the mock source produces the three states, and what was consciously cut. | `docs/WALKTHROUGH.md` (new) | 2 | TB-801 | Covers every deviation in §4 and every item left below the cut-line. |
-| TB-803 | Write the "what I would do next" list: Room behind `InMemoryTaskCache`, real `TaskApi` implementation, paging, screenshot tests, CI. | `docs/WALKTHROUGH.md` | 1 | TB-802 | Each item names the seam it would land on. |
+| TB-801 ☑ | Update `README.md` to reflect the delivered state: which iterations landed, what is stubbed, and the deviation rationale from REQUIREMENTS.md §4. | `README.md` | 2 | last shipped iteration | Someone cloning the repo can tell what works without running it. |
+| TB-802 ☑ | Write walkthrough notes: the module-graph story, why multi-module, why in-memory, how the mock source produces the three states, and what was consciously cut. | `docs/WALKTHROUGH.md` (new) | 2 | TB-801 | Covers every deviation in §4 and every item left below the cut-line. |
+| TB-803 ☑ | Write the "what I would do next" list: Room behind `InMemoryTaskCache`, real `TaskApi` implementation, paging, screenshot tests, CI. | `docs/WALKTHROUGH.md` | 1 | TB-802 | Each item names the seam it would land on. |
 
 ---
 
@@ -292,4 +292,4 @@ the reasoning behind any deliberate deviation. That is deliverable work, not an 
 |---|---|---|---|
 | Q-1 | Should completed tasks sort to the bottom by default, or hold their position? The brief specifies neither. | Product | **Closed by the assumption.** `TaskSort.DEFAULT` holds position and `TaskSort.COMPLETION` moves them, so the user chooses (FR-11). Reversing the default is a one-line change in `TaskListUiState`. |
 | Q-2 | On a failed delete, should the row reappear immediately or after the next refresh? | Product | Affects TB-204 and TB-306. Assumption: the cache is only updated on success, so the row never disappears in the first place. |
-| Q-3 | Is `Timeout` worth simulating separately from `Network`, or is one failure mode enough? | Engineering | Affects TB-104. Assumption: `Network` only, with `Timeout` reserved in the taxonomy for later. |
+| Q-3 | Is `Timeout` worth simulating separately from `Network`, or is one failure mode enough? | Engineering | **Closed by the assumption.** `Network` only; `Timeout` and `Conflict` stay in the taxonomy unemitted, and [WALKTHROUGH.md](WALKTHROUGH.md) §6 records that as a conscious cut. |

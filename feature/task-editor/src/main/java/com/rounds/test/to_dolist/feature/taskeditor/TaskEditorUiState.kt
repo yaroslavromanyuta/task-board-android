@@ -2,6 +2,7 @@ package com.rounds.test.to_dolist.feature.taskeditor
 
 import com.rounds.test.to_dolist.tasks.error.DataError
 import com.rounds.test.to_dolist.tasks.model.TaskPriority
+import java.time.Instant
 
 /**
  * Create and edit share this state because they share the form. [isEditing] is derived from whether
@@ -20,6 +21,7 @@ data class TaskEditorUiState(
     val title: String = "",
     val notes: String = "",
     val priority: TaskPriority = TaskPriority.MEDIUM,
+    val dueDate: Instant? = null,
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val isSaved: Boolean = false,

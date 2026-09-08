@@ -9,8 +9,8 @@
 | Brief last modified | 2026-09-08 |
 | Retrieved | 2026-09-08 |
 | Status | Baselined |
-| Companion document | [BACKLOG.md](BACKLOG.md) — epics, stories, tasks, iterations |
-| Implementation status | Iterations 0–3 delivered (E0–E6): all six core requirements plus FR-10, FR-11, FR-12, NFR-06 and NFR-07. Outstanding: E7 (FR-13, FR-14) and E8. See [../README.md](../README.md) |
+| Companion documents | [BACKLOG.md](BACKLOG.md) — epics, stories, tasks, iterations. [WALKTHROUGH.md](WALKTHROUGH.md) — what was built, why, and what comes next |
+| Implementation status | **Complete.** Iterations 0–5 delivered (E0–E8): every functional and non-functional requirement in this document. See [../README.md](../README.md) and [WALKTHROUGH.md](WALKTHROUGH.md) |
 
 Requirement IDs in this document are stable. `BACKLOG.md` references them; do not renumber.
 
@@ -70,9 +70,9 @@ Each deviation is a talking point for the walkthrough, not a silent choice.
 
 | Type | Fields | Notes |
 |---|---|---|
-| `Task` | `id: String`, `title: String`, `notes: String?`, `priority: TaskPriority`, `isCompleted: Boolean`, `createdAt: Instant` | Ids are opaque strings assigned by the API; the UI never parses them. |
+| `Task` | `id: String`, `title: String`, `notes: String?`, `priority: TaskPriority`, `isCompleted: Boolean`, `createdAt: Instant`, `dueDate: Instant?` | Ids are opaque strings assigned by the API; the UI never parses them. `dueDate` is an `Instant`, not a `LocalDate`: a point in time crosses a transport unambiguously, and which calendar day it falls on is the viewer's zone's answer to give (FR-13). |
 | `TaskPriority` | `LOW`, `MEDIUM`, `HIGH` | Declared low-to-high so the natural order of the enum is also the sort order. |
-| `TaskDraft` | `title`, `notes`, `priority` | The editable half of a `Task`. Create and update take the same payload — this is why one editor screen serves both. |
+| `TaskDraft` | `title`, `notes`, `priority`, `dueDate` | The editable half of a `Task`. Create and update take the same payload — this is why one editor screen serves both. |
 
 Defined in `lib/tasks-api/src/main/kotlin/com/rounds/test/to_dolist/tasks/model/`.
 

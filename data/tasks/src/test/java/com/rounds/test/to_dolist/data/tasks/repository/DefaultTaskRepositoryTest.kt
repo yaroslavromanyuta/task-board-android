@@ -9,6 +9,7 @@ import com.rounds.test.to_dolist.tasks.error.DataException
 import com.rounds.test.to_dolist.tasks.model.TaskDraft
 import com.rounds.test.to_dolist.tasks.model.TaskPriority
 import kotlinx.coroutines.flow.first
+import java.time.Instant
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -119,6 +120,19 @@ class DefaultTaskRepositoryTest {
     }
 
     @Test
+    fun `a due date survives the round-trip through the wire shape`() = runTest {
+        val repository = repository()
+        val due = Instant.parse("2026-09-11T09:00:00Z")
+
+        val created = repository.createTask(draft("Renew domain").copy(dueDate = due)).getOrThrow()
+        assertEquals(due, created.dueDate)
+        assertEquals(due, repository.observeTasks().first().first { it.id == created.id }.dueDate)
+
+        val cleared = repository.updateTask(created.id, draft("Renew domain")).getOrThrow()
+        assertEquals(null, cleared.dueDate)
+    }
+
+    @Test
     fun `an untyped transport failure is wrapped as a DataException`() = runTest {
         api.nextThrowable = IllegalStateException("socket closed")
         val repository = repository()
@@ -185,6 +199,7 @@ class DefaultTaskRepositoryTest {
                 priority = payload.priority,
                 completed = payload.completed,
                 createdAtEpochMillis = 0L,
+                dueDateEpochMillis = payload.dueDateEpochMillis,
             )
             store[created.id] = created
             created
@@ -196,6 +211,7 @@ class DefaultTaskRepositoryTest {
                 notes = payload.notes,
                 priority = payload.priority,
                 completed = payload.completed,
+                dueDateEpochMillis = payload.dueDateEpochMillis,
             )
             store[id] = updated
             updated

@@ -45,6 +45,7 @@ class FakeTaskRepository(
             title = draft.title,
             notes = draft.notes,
             priority = draft.priority,
+            dueDate = draft.dueDate,
         ).also { created ->
             source += created
             cached.value = cached.value + created
@@ -56,6 +57,7 @@ class FakeTaskRepository(
             title = draft.title,
             notes = draft.notes,
             priority = draft.priority,
+            dueDate = draft.dueDate,
         )
         store(updated)
         updated

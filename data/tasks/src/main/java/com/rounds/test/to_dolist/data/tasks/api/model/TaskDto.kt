@@ -11,6 +11,7 @@ data class TaskDto(
     val priority: String,
     val completed: Boolean,
     val createdAtEpochMillis: Long,
+    val dueDateEpochMillis: Long? = null,
 )
 
 /**
@@ -24,4 +25,5 @@ data class TaskPayload(
     val notes: String?,
     val priority: String,
     val completed: Boolean = false,
+    val dueDateEpochMillis: Long? = null,
 )

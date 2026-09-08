@@ -34,7 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.rounds.test.to_dolist.core.ui.component.EmptyMessage
 import com.rounds.test.to_dolist.core.ui.component.ErrorMessage
@@ -242,20 +242,20 @@ private fun TaskSort.label(): String = stringResource(
     },
 )
 
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
 private fun TaskListEmptyPreview() = PreviewScreen(TaskListUiState())
 
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
 private fun TaskListErrorPreview() = PreviewScreen(TaskListUiState(error = DataError.Network))
 
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
 private fun TaskListContentPreview() = PreviewScreen(TaskListUiState(tasks = PreviewTasks))
 
 /** A query that matches nothing: a state the list could not previously express. */
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
 private fun TaskListNoMatchesPreview() =
     PreviewScreen(TaskListUiState(tasks = PreviewTasks, query = "invoice"))

@@ -18,6 +18,7 @@ fun TaskDto.toDomain(): Task = Task(
     priority = priority.toPriority(),
     isCompleted = completed,
     createdAt = Instant.ofEpochMilli(createdAtEpochMillis),
+    dueDate = dueDateEpochMillis?.let(Instant::ofEpochMilli),
 )
 
 fun TaskDraft.toPayload(completed: Boolean = false): TaskPayload = TaskPayload(
@@ -25,6 +26,7 @@ fun TaskDraft.toPayload(completed: Boolean = false): TaskPayload = TaskPayload(
     notes = notes,
     priority = priority.name,
     completed = completed,
+    dueDateEpochMillis = dueDate?.toEpochMilli(),
 )
 
 /**

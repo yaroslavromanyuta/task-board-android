@@ -11,6 +11,7 @@ import com.rounds.test.to_dolist.tasks.model.TaskPriority
 import com.rounds.test.to_dolist.tasks.usecase.GetTaskUseCase
 import com.rounds.test.to_dolist.tasks.usecase.SaveTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,6 +61,7 @@ class TaskEditorViewModel @Inject constructor(
             notes = savedStateHandle[KEY_NOTES] ?: "",
             priority = savedStateHandle.get<String>(KEY_PRIORITY)?.let(TaskPriority::valueOf)
                 ?: TaskPriority.MEDIUM,
+            dueDate = savedStateHandle.get<Long>(KEY_DUE_DATE)?.let(Instant::ofEpochMilli),
             isLoading = taskId != null && !hasSavedForm,
         ),
     )
@@ -85,6 +87,12 @@ class TaskEditorViewModel @Inject constructor(
         _uiState.update { it.copy(priority = value) }
     }
 
+    /** A null [value] clears the date; the field is optional and stays clearable (FR-13). */
+    fun onDueDateChange(value: Instant?) {
+        savedStateHandle[KEY_DUE_DATE] = value?.toEpochMilli()
+        _uiState.update { it.copy(dueDate = value) }
+    }
+
     /**
      * Success is reported through [TaskEditorUiState.isSaved] rather than a callback: the call is
      * asynchronous, and a lambda invoked from `viewModelScope` would not know whether the screen it
@@ -103,6 +111,7 @@ class TaskEditorViewModel @Inject constructor(
                     title = state.title,
                     notes = state.notes,
                     priority = state.priority,
+                    dueDate = state.dueDate,
                 ),
             ).fold(
                 onSuccess = { _uiState.update { it.copy(isSaving = false, isSaved = true) } },
@@ -131,12 +140,14 @@ class TaskEditorViewModel @Inject constructor(
                         title = task.title,
                         notes = task.notes.orEmpty(),
                         priority = task.priority,
+                        dueDate = task.dueDate,
                     )
                     _uiState.update {
                         it.copy(
                             title = task.title,
                             notes = task.notes.orEmpty(),
                             priority = task.priority,
+                            dueDate = task.dueDate,
                             isLoading = false,
                         )
                     }
@@ -153,10 +164,11 @@ class TaskEditorViewModel @Inject constructor(
      * failure of the source, and the form survives it untouched.
      */
     /** Keeps the handle in step with a form the user did not type — the values a load just supplied. */
-    private fun rememberForm(title: String, notes: String, priority: TaskPriority) {
+    private fun rememberForm(title: String, notes: String, priority: TaskPriority, dueDate: Instant?) {
         savedStateHandle[KEY_TITLE] = title
         savedStateHandle[KEY_NOTES] = notes
         savedStateHandle[KEY_PRIORITY] = priority.name
+        savedStateHandle[KEY_DUE_DATE] = dueDate?.toEpochMilli()
     }
 
     private fun onSaveFailed(throwable: Throwable) {
@@ -173,5 +185,6 @@ class TaskEditorViewModel @Inject constructor(
         const val KEY_TITLE = "form_title"
         const val KEY_NOTES = "form_notes"
         const val KEY_PRIORITY = "form_priority"
+        const val KEY_DUE_DATE = "form_due_date"
     }
 }
