@@ -54,6 +54,12 @@ verified by temporarily introducing the violation.
 | `:feature:task-editor` | create/view/edit form: UiState, ViewModel, Route/Screen split, nav section |
 | `:app` | `TodoListApplication`, `MainActivity`, `TodoNavHost` |
 
+## Documentation
+
+- [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) — technical requirements, mock network spec, UI state
+  model, traceability against the source brief.
+- [docs/BACKLOG.md](docs/BACKLOG.md) — epics, user stories, tasks, iteration plan, cut-line, risks.
+
 ## Design decisions
 
 **One `lib` module per shared contract, not a shared "common" dumping ground.** Features need to know
@@ -108,8 +114,8 @@ yet.
 
 ## Next step
 
-Implement the mock network layer in `FakeTaskApi`: an in-memory store behind a `Mutex`,
-`delay(200..900 ms)` per call, and roughly a 1-in-7 chance of `DataError.Network` or `Timeout`, so the
-loading and error states the UI already handles are produced by the source rather than simulated in a
-ViewModel. Then fill in the mappers, the cache writes, `DefaultTaskRepository`, the use cases and the
-two ViewModels — the graph does not change.
+Iteration 1 in [docs/BACKLOG.md](docs/BACKLOG.md): implement the mock network layer in `FakeTaskApi`
+to the contract in [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) — an in-memory store behind a `Mutex`,
+a 300-800 ms delay on reads and a ~15% failure rate, so the loading and error states the UI already
+handles are produced by the source rather than simulated in a ViewModel. Then the mappers, the cache
+writes, `DefaultTaskRepository`, the use cases and the two ViewModels. The graph does not change.
