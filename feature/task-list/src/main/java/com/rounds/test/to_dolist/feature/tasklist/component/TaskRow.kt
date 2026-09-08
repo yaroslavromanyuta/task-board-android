@@ -17,6 +17,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,6 +33,10 @@ import java.time.Instant
 /**
  * One row: title, priority, a way to complete it, a way to delete it. Stateless — the row reports
  * intent and renders whatever it is handed, so it previews without a ViewModel.
+ *
+ * The title is capped at two lines with an ellipsis rather than left to wrap: the seed data contains a
+ * deliberately long title, and an uncapped row would grow until it pushed the rest of the list off
+ * screen (FR-01).
  */
 @Composable
 fun TaskRow(
@@ -40,6 +46,7 @@ fun TaskRow(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val toggleLabel = stringResource(R.string.task_list_action_toggle)
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -50,6 +57,7 @@ fun TaskRow(
         Checkbox(
             checked = task.isCompleted,
             onCheckedChange = onToggleCompleted,
+            modifier = Modifier.semantics { contentDescription = toggleLabel },
         )
         Column(
             modifier = Modifier
@@ -85,6 +93,27 @@ private fun TaskRowPreview() {
                 title = "Renew passport",
                 notes = null,
                 priority = TaskPriority.HIGH,
+                isCompleted = false,
+                createdAt = Instant.EPOCH,
+            ),
+            onClick = {},
+            onToggleCompleted = {},
+            onDelete = {},
+        )
+    }
+}
+
+/** The seed row that exists to stress the layout; previewed so a regression is visible without a device. */
+@Preview(showBackground = true)
+@Composable
+private fun TaskRowLongTitlePreview() {
+    TodoListTheme(dynamicColor = false) {
+        TaskRow(
+            task = Task(
+                id = "4",
+                title = "Migrate the analytics pipeline to the new warehouse and validate dashboards",
+                notes = "Long one \u2014 check layout",
+                priority = TaskPriority.MEDIUM,
                 isCompleted = false,
                 createdAt = Instant.EPOCH,
             ),

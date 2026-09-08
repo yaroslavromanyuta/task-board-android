@@ -3,9 +3,11 @@
 Multi-module Clean Architecture skeleton for a task list app: Kotlin, Jetpack Compose, Hilt,
 Navigation Compose with type-safe routes.
 
-This commit is **structure, not behaviour**. The module graph, DI, navigation and the contracts
-between layers are complete and the app runs; the mock network layer and the logic on top of it are
-the next step and are marked `TODO` at the exact seams where they belong.
+**Delivered: iterations 0 and 1.** The app launches into the task list, loads the brief's seed data
+through a mock network source that is slow (300-800 ms) and fails about 15% of the time, and renders
+loading, empty and error+retry as real consequences of that source rather than as simulations. Tasks
+can be completed and deleted straight from the list. The detail/edit screen is navigable but still
+stubbed - that is iteration 2 (E4).
 
 ## Module graph
 
@@ -48,8 +50,8 @@ verified by temporarily introducing the violation.
 | `:lib:navigation-api` | `Route` — the type-safe destination contract shared by both features |
 | `:core:common` | dispatcher qualifiers + Hilt module, `Clock`, `suspendRunCatching` |
 | `:core:ui` | theme, `Loading` / `EmptyMessage` / `ErrorMessage`, `PriorityIndicator`, error wording |
-| `:core:testing` | `MainDispatcherRule`, `FakeTaskRepository`, `TestData` |
-| `:data:tasks` | `TaskApi` + `FakeTaskApi`, DTOs and mappers, `InMemoryTaskCache`, `DefaultTaskRepository`, DI |
+| `:core:testing` | `MainDispatcherRule`, `FakeTaskRepository`, `TestData` - pure Kotlin JVM, so `:lib` tests can use it too |
+| `:data:tasks` | `TaskApi` + `FakeTaskApi`, `SeedData`, DTOs and mappers, `InMemoryTaskCache`, `DefaultTaskRepository`, DI |
 | `:feature:task-list` | list screen: UiState, ViewModel, Route/Screen split, `TaskRow`, nav section |
 | `:feature:task-editor` | create/view/edit form: UiState, ViewModel, Route/Screen split, nav section |
 | `:app` | `TodoListApplication`, `MainActivity`, `TodoNavHost` |
@@ -77,7 +79,15 @@ death is not in the brief. Swapping the cache for Room later touches `InMemoryTa
 `DataModule` and nothing above them.
 
 **`TaskApi` is an interface with a fake implementation, not a fake baked into the repository.** The
-repository is written against a contract that a Retrofit service could satisfy unchanged.
+repository is written against a contract that a Retrofit service could satisfy unchanged. It has five
+REST-shaped operations and no "set completed": the flag travels in `TaskPayload`, and
+`TaskRepository.setCompleted` is what turns one into the other, so the shape a real backend would
+offer is not bent to suit one screen.
+
+**The mock source's dice are injected and its failure rate is a `var`.** `FakeTaskApi` takes a
+`Random` and a `Clock`, so tests seed both and nothing depends on a roll the test did not choose
+(NFR-05). `failureRate` defaults to the brief's 0.15 and can be set to `0.0` to demo the happy path or
+`1.0` to demo the error state on cue.
 
 **Screens are split into `…Route` (stateful) and `…Screen` (stateless).** The screen previews and
 tests without Hilt; the route is the only place that knows a ViewModel exists.
@@ -108,14 +118,24 @@ one place, `AndroidSdk` in `build-logic`.
 ./gradlew installDebug           # onto a connected device or emulator
 ```
 
-The app launches to the task list showing its empty state, and the FAB opens the editor, where the
-form is live and Save stays disabled until the title is non-blank. Nothing reaches the data layer
-yet.
+The app launches into the list, shows a spinner for as long as the source takes, and then renders the
+four seed rows. Roughly one launch in seven fails instead, showing the typed error and a Retry that
+re-issues the load. The checkbox and the delete button on a row both round-trip through the source.
+The FAB opens the editor, where the form is live and Save stays disabled until the title is non-blank,
+but saving does not persist yet.
+
+To see a specific state on demand, set `FakeTaskApi.failureRate` to `0.0` or `1.0`.
+
+## What is tested
+
+`./gradlew test` covers the mock source (latency window, failure rate, `NotFound` determinism, CRUD
+round-trip, concurrent writes against a real dispatcher), the repository (cache untouched on a failed
+write, every failure typed as `DataException`, completion preserved across an edit), `SaveTaskUseCase`
+(validation, create-vs-update routing) and `TaskListViewModel` (every branch of the state table).
 
 ## Next step
 
-Iteration 1 in [docs/BACKLOG.md](docs/BACKLOG.md): implement the mock network layer in `FakeTaskApi`
-to the contract in [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) — an in-memory store behind a `Mutex`,
-a 300-800 ms delay on reads and a ~15% failure rate, so the loading and error states the UI already
-handles are produced by the source rather than simulated in a ViewModel. Then the mappers, the cache
-writes, `DefaultTaskRepository`, the use cases and the two ViewModels. The graph does not change.
+Iteration 2 in [docs/BACKLOG.md](docs/BACKLOG.md) — E4, the detail/edit screen: seed the form from
+`GetTaskUseCase` when navigation supplied a `taskId`, save through `SaveTaskUseCase`, and surface a
+failed save without losing what the user typed. The data layer underneath it is already in place, so
+the change is confined to `TaskEditorViewModel` and its test. The graph does not change.

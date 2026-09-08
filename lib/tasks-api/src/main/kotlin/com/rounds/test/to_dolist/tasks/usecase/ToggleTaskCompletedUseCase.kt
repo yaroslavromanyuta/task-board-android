@@ -11,5 +11,5 @@ class ToggleTaskCompletedUseCase @Inject constructor(
     private val repository: TaskRepository,
 ) {
     suspend operator fun invoke(id: String, completed: Boolean): Result<Unit> =
-        TODO("Skeleton: implemented with the data layer")
+        repository.setCompleted(id, completed)
 }

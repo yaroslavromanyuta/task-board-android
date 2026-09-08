@@ -23,6 +23,9 @@ import com.rounds.test.to_dolist.core.ui.error.asMessage
 import com.rounds.test.to_dolist.core.ui.theme.TodoListTheme
 import com.rounds.test.to_dolist.feature.tasklist.component.TaskRow
 import com.rounds.test.to_dolist.tasks.error.DataError
+import com.rounds.test.to_dolist.tasks.model.Task
+import com.rounds.test.to_dolist.tasks.model.TaskPriority
+import java.time.Instant
 
 /**
  * Stateless screen: everything it shows arrives in [state] and everything it does leaves through a
@@ -113,3 +116,33 @@ private fun TaskListErrorPreview() {
         )
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+private fun TaskListContentPreview() {
+    TodoListTheme(dynamicColor = false) {
+        TaskListScreen(
+            state = TaskListUiState(tasks = PreviewTasks),
+            onTaskClick = {},
+            onAddTask = {},
+            onToggleCompleted = { _, _ -> },
+            onDelete = {},
+            onRetry = {},
+        )
+    }
+}
+
+/** The seed rows, so the preview shows the layout the app actually renders on launch. */
+private val PreviewTasks = listOf(
+    Task("task-1", "Renew domain registration", "Expires end of month", TaskPriority.HIGH, false, Instant.EPOCH),
+    Task("task-2", "Reply to design feedback", null, TaskPriority.MEDIUM, false, Instant.EPOCH),
+    Task("task-3", "Book dentist", null, TaskPriority.LOW, true, Instant.EPOCH),
+    Task(
+        id = "task-4",
+        title = "Migrate the analytics pipeline to the new warehouse and validate dashboards",
+        notes = "Long one — check layout",
+        priority = TaskPriority.MEDIUM,
+        isCompleted = false,
+        createdAt = Instant.EPOCH,
+    ),
+)

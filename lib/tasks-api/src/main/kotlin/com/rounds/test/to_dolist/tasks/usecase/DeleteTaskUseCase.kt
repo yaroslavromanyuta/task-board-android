@@ -6,5 +6,5 @@ import javax.inject.Inject
 class DeleteTaskUseCase @Inject constructor(
     private val repository: TaskRepository,
 ) {
-    suspend operator fun invoke(id: String): Result<Unit> = TODO("Skeleton: implemented with the data layer")
+    suspend operator fun invoke(id: String): Result<Unit> = repository.deleteTask(id)
 }

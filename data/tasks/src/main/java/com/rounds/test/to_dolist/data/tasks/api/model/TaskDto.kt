@@ -13,9 +13,15 @@ data class TaskDto(
     val createdAtEpochMillis: Long,
 )
 
-/** Request body for create and update — the server owns id and timestamps. */
+/**
+ * Request body for create and update — the server owns id and timestamps.
+ *
+ * [completed] travels in the payload because `TaskApi` deliberately has no "set completed" operation:
+ * five REST-shaped calls are the contract, so completing a task is an update like any other.
+ */
 data class TaskPayload(
     val title: String,
     val notes: String?,
     val priority: String,
+    val completed: Boolean = false,
 )
