@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+
+        <!--
+            Lets the QA journey suite flip FakeTaskApi.failureRate on a running app. Exported
+            because `adb shell am broadcast` runs as the shell uid and cannot reach a private
+            receiver; unguarded by a permission for the same reason. It is confined to the debug
+            variant and its whole authority is a mock's dice, so there is nothing here to abuse in
+            a shipped build - the release manifest does not declare it at all.
+        -->
+        <receiver
+            android:name="com.rounds.test.to_dolist.qa.QaControlReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="com.rounds.test.to_dolist.QA_SET_FAILURE_RATE" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>
