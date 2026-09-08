@@ -1,0 +1,18 @@
+<journey name="TL-05 Deleting a task removes it and announces it">
+  <description>
+    Covers FR-04 and the first half of FR-12. The delete must reach the source: the cache is only
+    updated on success, so a failed delete never removes the row in the first place (BACKLOG.md Q-2).
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Verify that "Book dentist" is on screen</action>
+    <action>Tap the element with the content description "Delete task" on the "Book dentist" row</action>
+    <action>Verify that "Book dentist" is no longer in the list</action>
+    <action>Verify that a message reading "Task deleted" is on screen</action>
+    <action>Verify that an "Undo" action is offered next to that message</action>
+    <action>Verify that exactly three elements with the content description "Delete task" remain on screen</action>
+  </actions>
+</journey>

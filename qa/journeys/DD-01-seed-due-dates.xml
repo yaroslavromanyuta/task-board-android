@@ -1,0 +1,25 @@
+<journey name="DD-01 Due dates render in human terms and overdue ones stand out">
+  <description>
+    Covers FR-13. RelativeDate resolves an instant against the viewer's own time zone and words it
+    the way a person would: within one day it is named, up to seven days it is counted, beyond that
+    it falls back to an absolute date (core/ui RelativeDate.kt:42-58,79).
+
+    The seed rows carry offsets rather than fixed dates so they never go stale: row 1 is due in
+    three days, row 4 was due yesterday, rows 2 and 3 carry no date at all. Both cases are on screen
+    from launch, which is what SeedData.kt:14-16 says they are for.
+
+    An overdue date is also coloured with the error colour (TaskRow.kt:112-113). Colour is checked
+    by eye from a screenshot; the wording is checked from the layout dump.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Verify that the "Renew domain registration" row shows "Due in 3 days"</action>
+    <action>Verify that the "Migrate the analytics pipeline to the new warehouse and validate dashboards" row shows "Due yesterday"</action>
+    <action>Verify that the "Reply to design feedback" row shows no due date text</action>
+    <action>Verify that the "Book dentist" row shows no due date text</action>
+    <action>Verify from a screenshot that "Due yesterday" is rendered in a warning or error colour distinct from "Due in 3 days"</action>
+  </actions>
+</journey>

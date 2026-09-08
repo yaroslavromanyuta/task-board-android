@@ -1,0 +1,24 @@
+<journey name="TL-11 Search matches titles only, case-insensitively">
+  <description>
+    Covers FR-10. TaskListUiState.visibleTasks filters on title.contains(query, ignoreCase = true)
+    (TaskListUiState.kt:30) - notes are not searched.
+
+    "Expires end of month" is the notes text of the first seed row, so searching for "Expires" must
+    find nothing. That is the current contract, not an oversight; if product wants notes searched,
+    this journey is where that decision becomes visible.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the "Search by title" field</action>
+    <action>Type "RENEW" into the "Search by title" field</action>
+    <action>Verify that "Renew domain registration" is on screen</action>
+    <action>Verify that "Book dentist" is not on screen</action>
+    <action>Tap the element with the content description "Clear search"</action>
+    <action>Tap the "Search by title" field</action>
+    <action>Type "Expires" into the "Search by title" field</action>
+    <action>Verify that no task rows are on screen and a no-matches message naming "Expires" is shown instead</action>
+  </actions>
+</journey>

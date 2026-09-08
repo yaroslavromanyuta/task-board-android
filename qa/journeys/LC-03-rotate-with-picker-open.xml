@@ -1,0 +1,29 @@
+<journey name="LC-03 Rotating with the date picker open loses the dialog">
+  <description>
+    KNOWN-DEFECT WATCHLIST. Expected to fail if the current behaviour is judged wrong; see
+    qa/TEST-PLAN.md.
+
+    The editor holds the picker's visibility in `var picking by remember` rather than
+    rememberSaveable (TaskEditorScreen.kt:204). remember does not survive a configuration change, so
+    rotating while the picker is open closes it and drops the date the user had highlighted. The
+    surrounding form survives, because that state is in the ViewModel - the dialog is the one piece
+    that is not.
+
+    NFR-06 asks for state intact across configuration change. Whether an open dialog counts as state
+    is the question this journey puts on the table; the one-word fix is rememberSaveable.
+
+    Preconditions:
+      adb shell settings put system accelerometer_rotation 0
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the "Book dentist" row</action>
+    <action>Verify that "No due date" is on screen</action>
+    <action>Tap "Set date"</action>
+    <action>Verify that a date picker dialog is on screen</action>
+    <action>Using adb, rotate the device to landscape</action>
+    <action>Verify that the date picker dialog is still on screen</action>
+    <action>Verify that "Book dentist" is still in the "Title" field</action>
+  </actions>
+</journey>

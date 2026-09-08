@@ -1,0 +1,29 @@
+<journey name="TH-01 Dark mode keeps the priority colours apart">
+  <description>
+    Covers FR-14 and backlog tasks TB-705 and TB-706. The priority palette has a separate dark set
+    because the light one does not survive inversion: on a dark surface the three dots must still
+    read as three different ranks, and the overdue date must still read as a warning rather than as
+    body text.
+
+    Priority is conveyed by text as well as colour (NFR-09), so the labels are checked in the layout
+    dump and the colours by eye from a screenshot. A palette that fails here fails for colour-blind
+    users in light mode too.
+
+    Preconditions:
+      adb shell cmd uimode night yes
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+
+    Afterwards:
+      adb shell cmd uimode night no
+  </description>
+  <actions>
+    <action>Verify from a screenshot that the app is rendered on a dark background</action>
+    <action>Verify that elements with the content descriptions "High", "Medium" and "Low" are all on screen</action>
+    <action>Verify from a screenshot that the priority indicators for High, Medium and Low are three visibly different colours</action>
+    <action>Verify from a screenshot that "Due yesterday" is rendered in a colour distinct from "Due in 3 days"</action>
+    <action>Verify from a screenshot that every task title is legible against the dark background</action>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Verify from a screenshot that the priority chips are legible and that the selected chip is distinguishable from the unselected ones</action>
+  </actions>
+</journey>

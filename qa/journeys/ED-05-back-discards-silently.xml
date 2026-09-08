@@ -1,0 +1,29 @@
+<journey name="ED-05 Leaving the editor discards an unsaved edit without asking">
+  <description>
+    KNOWN-DEFECT WATCHLIST. Expected to fail if the current behaviour is judged wrong; see
+    qa/TEST-PLAN.md.
+
+    Both onDone and onBack route to navController::navigateUp (TodoNavHost.kt:31-32) and there is no
+    confirmation dialog anywhere in the editor. A user who types a long note and then presses Back -
+    or the system back gesture - loses it with no warning and no undo. Unlike a delete, this has no
+    snackbar behind it.
+
+    The journey asserts what happens today. Whether a "discard changes?" prompt is worth the code is
+    a product call; what the suite owes is that the loss is recorded rather than discovered.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the "Reply to design feedback" row</action>
+    <action>Verify that the title "Edit task" is on screen</action>
+    <action>Replace the contents of the "Title" field with "Reply to the design review"</action>
+    <action>Type "Due before the standup" into the "Notes (optional)" field</action>
+    <action>Tap the element with the content description "Back"</action>
+    <action>Verify that no confirmation dialog was shown</action>
+    <action>Verify that the app returns to the "Tasks" screen</action>
+    <action>Verify that "Reply to design feedback" is on screen unchanged</action>
+    <action>Verify that "Reply to the design review" is not on screen</action>
+  </actions>
+</journey>

@@ -1,0 +1,27 @@
+<journey name="ED-07 A failed edit-mode load replaces the form and retries">
+  <description>
+    Covers FR-09 inside the editor - the second of its three failure fields (REQUIREMENTS.md section
+    9, lines 243-248). Edit mode opens by fetching the task; if that fetch fails there is no form to
+    protect, so the failure becomes the screen, with Retry.
+
+    Note that the app bar stays in all three branches (TaskEditorScreen.kt:113-130), so Back and a
+    disabled Save remain on screen over the error. That is intentional: a user must always be able
+    to leave.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+      # wait for the list, then break the source before opening a row
+      adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 1.0
+  </description>
+  <actions>
+    <action>Tap the "Renew domain registration" row</action>
+    <action>Verify that the title "Edit task" is on screen</action>
+    <action>Verify that "No connection. Check your network and try again." is on screen</action>
+    <action>Verify that a "Retry" button is on screen</action>
+    <action>Verify that no "Title" field is on screen</action>
+    <action>Verify that an element with the content description "Back" is on screen</action>
+    <action>Tap the element with the content description "Back"</action>
+    <action>Verify that the app returns to the "Tasks" screen with its four rows still listed</action>
+  </actions>
+</journey>

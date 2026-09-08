@@ -1,0 +1,27 @@
+<journey name="ED-03 Titles are trimmed and empty notes are dropped">
+  <description>
+    Covers FR-02's normalisation, which lives in SaveTaskUseCase.kt:19-26 and nowhere else: the
+    title is trimmed before it reaches the repository, and notes that trim to empty become null
+    rather than an empty string.
+
+    The list row is the observable half of the title rule. The notes rule is observed by reopening
+    the task: a null and an empty string both render as an empty field, so this journey asserts the
+    part the user can see and leaves the null/empty distinction to SaveTaskUseCaseTest.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Type "   Buy milk   " into the "Title" field, with leading and trailing spaces</action>
+    <action>Type three spaces into the "Notes (optional)" field</action>
+    <action>Tap the "Save" button</action>
+    <action>Verify that the app returns to the "Tasks" screen</action>
+    <action>Verify that a row reading exactly "Buy milk", with no leading or trailing spaces, is on screen</action>
+    <action>Tap the "Buy milk" row</action>
+    <action>Verify that the title "Edit task" is on screen</action>
+    <action>Verify that the "Title" field contains exactly "Buy milk"</action>
+    <action>Verify that the "Notes (optional)" field is empty</action>
+  </actions>
+</journey>

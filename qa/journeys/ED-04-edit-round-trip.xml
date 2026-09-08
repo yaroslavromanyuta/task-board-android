@@ -1,0 +1,29 @@
+<journey name="ED-04 Opening a task seeds the form and an edit reaches the list">
+  <description>
+    Covers FR-05, and the navigation contract behind it: a route argument carries an id, not an
+    object, so the editor refetches the task from the source through SavedStateHandle
+    (TaskEditorViewModel.kt:49). A seeded form proves the refetch happened.
+
+    Edit mode makes one source call on open and one on save, so the dice are off.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the "Renew domain registration" row</action>
+    <action>Verify that the title "Edit task" is on screen</action>
+    <action>Verify that the "Title" field contains "Renew domain registration"</action>
+    <action>Verify that the "Notes (optional)" field contains "Expires end of month"</action>
+    <action>Verify that the "High" priority chip is selected</action>
+    <action>Verify that "Due in 3 days" is on screen</action>
+    <action>Replace the contents of the "Title" field with "Renew the domain"</action>
+    <action>Tap the "Low" priority chip</action>
+    <action>Tap the "Save" button</action>
+    <action>Verify that the app returns to the "Tasks" screen</action>
+    <action>Verify that "Renew the domain" is on screen</action>
+    <action>Verify that "Renew domain registration" is not on screen</action>
+    <action>Verify that the "Renew the domain" row has an element with the content description "Low"</action>
+    <action>Verify that "Renew the domain" is still the first row in the list</action>
+  </actions>
+</journey>

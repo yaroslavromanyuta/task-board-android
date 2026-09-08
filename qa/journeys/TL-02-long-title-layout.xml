@@ -1,0 +1,22 @@
+<journey name="TL-02 A long title does not break the row layout">
+  <description>
+    Covers FR-01's last clause and backlog task TB-303. The fourth seed row is deliberately long and
+    SeedData.kt:9-11 forbids shortening it: it exists to stress this layout. The title is capped at
+    two lines with an ellipsis (TaskRow.kt:77-83), and the row's controls must survive that.
+
+    A failure here looks like a clipped delete icon, a checkbox pushed off the left edge, or a title
+    that pushes the priority label out of the row.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Verify that "Migrate the analytics pipeline to the new warehouse and validate dashboards" is on screen</action>
+    <action>Verify that the fourth row has a checkbox with the content description "Mark complete" and that it is fully within the screen bounds</action>
+    <action>Verify that the fourth row has an element with the content description "Delete task" and that it is fully within the screen bounds</action>
+    <action>Verify that the fourth row has an element with the content description "Medium"</action>
+    <action>Verify that the fourth row shows "Due yesterday"</action>
+    <action>Verify that the fourth row does not overlap the row above it</action>
+  </actions>
+</journey>

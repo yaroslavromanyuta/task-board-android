@@ -1,0 +1,25 @@
+<journey name="ST-04 A failure over a loaded list does not blank it">
+  <description>
+    The boundary case REQUIREMENTS.md section 9 singles out (lines 206-216), and the one rule that
+    lives in TaskListViewModel.reportFailure: content on screen means the failure passes over it;
+    nothing on screen means it becomes the screen. A flaky moment must cost the user a snackbar,
+    not their list.
+
+    The highest-value scenario in the suite. If it fails, FR-09 is broken in the direction users
+    notice.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+      # wait for the four seed rows, then break the source
+      adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 1.0
+  </description>
+  <actions>
+    <action>Verify that "Renew domain registration" is on screen</action>
+    <action>Tap the checkbox with the content description "Mark complete" on the "Reply to design feedback" row</action>
+    <action>Verify that "No connection. Check your network and try again." is on screen</action>
+    <action>Verify that "Renew domain registration" is still on screen</action>
+    <action>Verify that "Reply to design feedback" is still on screen</action>
+    <action>Verify that "Retry" is not on screen</action>
+  </actions>
+</journey>

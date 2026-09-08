@@ -1,0 +1,24 @@
+<journey name="TL-07 Undoing a completed task brings it back completed">
+  <description>
+    Covers the hardest guarantee in FR-12. A TaskDraft has no isCompleted field, so the restore
+    cannot carry the flag in the create payload - RestoreTaskUseCase creates the task and then makes
+    a second setCompleted call (WALKTHROUGH.md section 5). If that second call is dropped, a
+    completed task quietly comes back unfinished and the user has to notice on their own.
+
+    "Book dentist" is the only seed row that starts completed.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Verify that the "Book dentist" row has a checked checkbox</action>
+    <action>Tap the element with the content description "Delete task" on the "Book dentist" row</action>
+    <action>Verify that a message reading "Task deleted" is on screen</action>
+    <action>Tap the "Undo" action on that message</action>
+    <action>Verify that "Book dentist" is on screen again</action>
+    <action>Verify that the restored "Book dentist" row has a checked checkbox</action>
+    <action>Verify that the restored "Book dentist" title is struck through</action>
+    <action>Verify that the restored "Book dentist" row still has an element with the content description "Low"</action>
+  </actions>
+</journey>

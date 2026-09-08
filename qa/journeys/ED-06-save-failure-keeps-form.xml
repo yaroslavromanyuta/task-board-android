@@ -1,0 +1,27 @@
+<journey name="ED-06 A failed save keeps the form and does not navigate">
+  <description>
+    Covers FR-02 and the third of the editor's failure fields (REQUIREMENTS.md section 9, lines
+    243-248). A save that fails is a saveError: a snackbar over a form that is still intact, with
+    isSaved never set, so the route does not navigate away. Nothing the user typed may be lost.
+
+    Contrast with ED-07, where the *load* fails and the form is replaced instead.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+      # open the editor and fill it in first, then break the source before tapping Save
+      adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 1.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Type "Pay the invoice" into the "Title" field</action>
+    <action>Type "Before Friday" into the "Notes (optional)" field</action>
+    <action>Tap the "High" priority chip</action>
+    <action>Tap the "Save" button</action>
+    <action>Verify that "No connection. Check your network and try again." is on screen</action>
+    <action>Verify that the title "New task" is still on screen</action>
+    <action>Verify that the "Title" field still contains "Pay the invoice"</action>
+    <action>Verify that the "Notes (optional)" field still contains "Before Friday"</action>
+    <action>Verify that the "High" priority chip is still selected</action>
+  </actions>
+</journey>

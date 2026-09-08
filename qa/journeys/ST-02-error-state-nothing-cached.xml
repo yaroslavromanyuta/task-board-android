@@ -1,0 +1,21 @@
+<journey name="ST-02 A first load that fails becomes the screen">
+  <description>
+    Covers FR-09. REQUIREMENTS.md section 9, precedence 2: a failure with nothing cached is a
+    full-screen typed message plus Retry, never a snackbar.
+
+    The wording comes from core_ui_error_network and must match exactly. DataError carries no
+    strings, so a change here is a change in :core:ui, not in the data layer.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 1.0
+  </description>
+  <actions>
+    <action>Verify that "No connection. Check your network and try again." is on screen</action>
+    <action>Verify that a "Retry" button is on screen</action>
+    <action>Verify that "Renew domain registration" is not on screen</action>
+    <action>Verify that an element with the content description "Add task" is still on screen</action>
+    <action>Verify that "Search by title" is not on screen</action>
+    <action>Verify that no element with the content description "Sort tasks" is on screen</action>
+  </actions>
+</journey>

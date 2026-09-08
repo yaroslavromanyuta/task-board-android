@@ -1,0 +1,19 @@
+<journey name="TL-04 Un-completing a task clears the strikethrough">
+  <description>
+    Covers the other direction of FR-03, starting from the one seed row that arrives completed:
+    "Book dentist" (SeedData.kt:50-55). An edit to a completed task must not silently un-complete it
+    and un-completing must not lose the other fields.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Verify that the "Book dentist" row has a checked checkbox</action>
+    <action>Verify that the "Book dentist" title is struck through</action>
+    <action>Tap the checkbox with the content description "Mark complete" on the "Book dentist" row</action>
+    <action>Verify that the "Book dentist" row now has an unchecked checkbox</action>
+    <action>Verify that the "Book dentist" title is not struck through</action>
+    <action>Verify that the "Book dentist" row still has an element with the content description "Low"</action>
+  </actions>
+</journey>

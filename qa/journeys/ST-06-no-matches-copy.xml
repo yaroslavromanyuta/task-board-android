@@ -1,0 +1,23 @@
+<journey name="ST-06 No search matches is a different sentence from no tasks">
+  <description>
+    Covers FR-10. REQUIREMENTS.md section 9 (lines 218-221) requires the two empties to read
+    differently: "there is nothing here" and "nothing matches what you typed" are different facts.
+
+    The expected string uses typographic quotation marks, U+201C and U+201D, taken verbatim from
+    task_list_no_matches. A straight-quote match is a failure, not a formatting detail.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Verify that "Renew domain registration" is on screen</action>
+    <action>Tap the "Search by title" field</action>
+    <action>Type "zzz" into the "Search by title" field</action>
+    <action>Verify that the text “No tasks match “zzz”.” is on screen, with typographic quotation marks around zzz</action>
+    <action>Verify that "No tasks yet. Tap + to add one." is not on screen</action>
+    <action>Verify that "Renew domain registration" is not on screen</action>
+    <action>Tap the element with the content description "Clear search"</action>
+    <action>Verify that "Renew domain registration" is on screen again</action>
+  </actions>
+</journey>

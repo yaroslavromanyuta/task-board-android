@@ -1,0 +1,26 @@
+<journey name="AX-01 Every icon-only control carries a description">
+  <description>
+    Covers NFR-09, which backlog task TB-308 verified by reading the code rather than by running
+    anything. An icon-only control with no content description is invisible to TalkBack and
+    unreachable by any assistive navigation.
+
+    The decorative search icon is deliberately null (TaskListScreen.kt:192) and must stay that way -
+    announcing it would be noise, not access.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Verify that an element with the content description "Add task" is on screen</action>
+    <action>Verify that an element with the content description "Sort tasks" is on screen</action>
+    <action>Verify that every task row has an element with the content description "Delete task"</action>
+    <action>Verify that every task row has a checkbox with a content description</action>
+    <action>Tap the "Search by title" field</action>
+    <action>Type "e" into the "Search by title" field</action>
+    <action>Verify that an element with the content description "Clear search" is on screen</action>
+    <action>Tap the element with the content description "Clear search"</action>
+    <action>Tap the "Renew domain registration" row</action>
+    <action>Verify that an element with the content description "Back" is on screen</action>
+  </actions>
+</journey>
