@@ -1,0 +1,19 @@
+<journey name="TL-03 Completing a task marks it and survives a refresh">
+  <description>
+    Covers FR-03. The completed state has to reach the source, not just the checkbox: TaskApi has no
+    "set completed" operation, so TaskRepository.setCompleted reads the task's current fields and
+    re-sends them with the flag flipped (WALKTHROUGH.md section 5). A refresh is what proves the
+    round trip happened.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Verify that the "Renew domain registration" row has an unchecked checkbox</action>
+    <action>Tap the checkbox with the content description "Mark complete" on the "Renew domain registration" row</action>
+    <action>Verify that the "Renew domain registration" row now has a checked checkbox</action>
+    <action>Verify that the "Renew domain registration" title is struck through</action>
+    <action>Verify that "Renew domain registration" is still in the first position in the list</action>
+  </actions>
+</journey>

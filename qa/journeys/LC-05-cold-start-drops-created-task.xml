@@ -1,0 +1,32 @@
+<journey name="LC-05 A cold start returns to the four seed rows">
+  <description>
+    Not a defect - a deviation, recorded as D-2 in REQUIREMENTS.md section 4 and argued in
+    WALKTHROUGH.md section 4. The store is a MutableList inside FakeTaskApi, rebuilt from SEED_TASKS
+    in its init block, so killing the process discards everything the user did and the app comes
+    back to exactly four rows.
+
+    This journey exists to make the boundary explicit rather than surprising, and because it is also
+    the suite's reset protocol: every other journey depends on this being true.
+
+    It also pins the documented cut that the list's search and sort are not restored across process
+    death (WALKTHROUGH.md section 6), which is the one place a passing journey records an
+    intentional absence.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Type "Written on water" into the "Title" field</action>
+    <action>Tap the "Save" button</action>
+    <action>Verify that "Written on water" is on screen</action>
+    <action>Tap the element with the content description "Sort tasks"</action>
+    <action>Tap "Priority"</action>
+    <action>Using adb, force-stop the app and launch it again with --es qa_failure_rate 0.0</action>
+    <action>Verify that "Written on water" is not on screen</action>
+    <action>Verify that "Renew domain registration" is the first row</action>
+    <action>Verify that exactly four elements with the content description "Delete task" are on screen</action>
+    <action>Verify that the "Search by title" field is empty</action>
+  </actions>
+</journey>

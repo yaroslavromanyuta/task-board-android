@@ -1,0 +1,24 @@
+<journey name="AX-02 The row checkbox announces the same label whatever its state">
+  <description>
+    KNOWN-DEFECT WATCHLIST. Expected to fail if the current behaviour is judged wrong; see
+    qa/TEST-PLAN.md.
+
+    TaskRow sets a single static content description on the checkbox (TaskRow.kt:69, the string
+    task_list_action_toggle = "Mark complete"). It does not flip to "Mark incomplete" when the task
+    is already done, so TalkBack announces the wrong action on every completed row: a user is told
+    they can mark complete something that already is.
+
+    The checked state itself is exposed correctly, so a screen reader is not left with nothing - but
+    the label contradicts it. NFR-09 asks that icon-only controls carry descriptions; it is silent
+    on whether they must stay accurate, which is what makes this a decision rather than an
+    unambiguous bug.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Verify that the "Book dentist" row has a checked checkbox</action>
+    <action>Verify that the checkbox on the "Book dentist" row is described as something other than "Mark complete", appropriate to a task that is already complete</action>
+  </actions>
+</journey>

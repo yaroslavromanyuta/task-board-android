@@ -1,0 +1,29 @@
+<journey name="LC-02 Rotating the editor keeps a half-filled form">
+  <description>
+    Covers NFR-06 for the editor. Every field is written through to SavedStateHandle on each change
+    (TaskEditorViewModel.kt:76-92), so a rotation must return the form exactly as it was - including
+    a priority chip the user changed and a due date they picked.
+
+    A restored form is also never reloaded over (hasSavedForm, TaskEditorViewModel.kt:55): what the
+    user typed is newer than what the source holds. LC-04 is the harder version of the same rule.
+
+    Preconditions:
+      adb shell settings put system accelerometer_rotation 0
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Type "Half a thought" into the "Title" field</action>
+    <action>Type "Started but not finished" into the "Notes (optional)" field</action>
+    <action>Tap the "High" priority chip</action>
+    <action>Using adb, rotate the device to landscape</action>
+    <action>Verify that the title "New task" is on screen</action>
+    <action>Verify that the "Title" field still contains "Half a thought"</action>
+    <action>Verify that the "Notes (optional)" field still contains "Started but not finished"</action>
+    <action>Verify that the "High" priority chip is still selected</action>
+    <action>Using adb, rotate the device back to portrait</action>
+    <action>Verify that the "Title" field still contains "Half a thought"</action>
+    <action>Verify that the "High" priority chip is still selected</action>
+  </actions>
+</journey>

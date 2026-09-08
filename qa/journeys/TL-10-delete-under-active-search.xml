@@ -1,0 +1,28 @@
+<journey name="TL-10 Undo under an active search restores outside the filter">
+  <description>
+    Covers FR-10 composed with FR-12. Search is a derivation over the cached list, not a query
+    against the source (REQUIREMENTS.md section 9, lines 218-221), and undo re-creates rather than
+    resurrects. Put together: a task deleted while a filter is active comes back into `tasks` but
+    need not come back into `visibleTasks`.
+
+    Here the query still matches the restored title, so it stays visible; the assertion that matters
+    is that it returns to the bottom of the filtered list and that the query survives the round trip
+    untouched.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the "Search by title" field</action>
+    <action>Type "e" into the "Search by title" field</action>
+    <action>Verify that "Renew domain registration" is on screen</action>
+    <action>Verify that "Book dentist" is on screen</action>
+    <action>Tap the element with the content description "Delete task" on the "Book dentist" row</action>
+    <action>Verify that "Book dentist" is no longer on screen</action>
+    <action>Verify that the "Search by title" field still contains "e"</action>
+    <action>Tap the "Undo" action on the "Task deleted" message</action>
+    <action>Verify that "Book dentist" is on screen again</action>
+    <action>Verify that the "Search by title" field still contains "e"</action>
+  </actions>
+</journey>

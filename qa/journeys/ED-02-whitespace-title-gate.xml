@@ -1,0 +1,29 @@
+<journey name="ED-02 A whitespace-only title never reaches the validation error">
+  <description>
+    KNOWN-DEFECT WATCHLIST - a dead-UI finding rather than a functional break. See qa/TEST-PLAN.md.
+
+    Two rules guard a blank title. canSave is title.isNotBlank() (TaskEditorUiState.kt:33) and
+    SaveTaskUseCase returns ValidationException.BlankTitle for a title that trims to empty
+    (SaveTaskUseCase.kt:19-26). isNotBlank() is already false for "   ", so the button stays
+    disabled and the use case is never called.
+
+    The consequence is that "A title is required." - a real string, a real supportingText branch,
+    and a tested ViewModel path - cannot be reached through the UI at all. This journey pins that:
+    if a future change makes the error appear, the journey fails and someone re-reads the intent.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Type three spaces into the "Title" field</action>
+    <action>Verify that the "Save" button is disabled</action>
+    <action>Verify that "A title is required." is not on screen</action>
+    <action>Type "x" into the "Title" field</action>
+    <action>Verify that the "Save" button is enabled</action>
+    <action>Delete the "x" from the "Title" field, leaving only the spaces</action>
+    <action>Verify that the "Save" button is disabled again</action>
+    <action>Verify that "A title is required." is still not on screen</action>
+  </actions>
+</journey>

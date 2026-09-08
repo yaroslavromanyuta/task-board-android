@@ -1,0 +1,30 @@
+<journey name="LC-04 A half-typed form survives process death">
+  <description>
+    Covers NFR-07, the strongest state guarantee in the brief and the one no unit test can prove on
+    a device. The editor writes every field into SavedStateHandle under the keys form_title,
+    form_notes, form_priority and form_due_date, and a restored form is never reloaded over.
+
+    `am kill` is a no-op against a foreground process, so the app must be backgrounded first. This
+    is the closest an unrooted device gets to the real thing; the "Don't keep activities" developer
+    option is the alternative recipe and is listed in qa/README.md.
+
+    The list's own query and sort are deliberately NOT expected to survive - see LC-05.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Type "Survives the reaper" into the "Title" field</action>
+    <action>Type "Typed but never saved" into the "Notes (optional)" field</action>
+    <action>Tap the "High" priority chip</action>
+    <action>Press the Home button</action>
+    <action>Using adb, kill the app process with `am kill com.rounds.test.to_dolist`</action>
+    <action>Reopen the app from the recents list</action>
+    <action>Verify that the title "New task" is on screen</action>
+    <action>Verify that the "Title" field still contains "Survives the reaper"</action>
+    <action>Verify that the "Notes (optional)" field still contains "Typed but never saved"</action>
+    <action>Verify that the "High" priority chip is still selected</action>
+  </actions>
+</journey>

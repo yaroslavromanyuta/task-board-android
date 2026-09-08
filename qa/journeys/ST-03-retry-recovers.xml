@@ -1,0 +1,19 @@
+<journey name="ST-03 Retry recovers from the error screen">
+  <description>
+    Covers the recovery half of FR-09. The error state must not be terminal: one tap of Retry, with
+    the source healthy again, replaces it with the list.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 1.0
+      # wait for the error screen, then heal the source
+      adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Verify that "No connection. Check your network and try again." is on screen</action>
+    <action>Tap the "Retry" button</action>
+    <action>Verify that "Renew domain registration" is on screen</action>
+    <action>Verify that "No connection. Check your network and try again." is no longer on screen</action>
+    <action>Verify that "Retry" is no longer on screen</action>
+  </actions>
+</journey>

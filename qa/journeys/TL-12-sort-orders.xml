@@ -1,0 +1,32 @@
+<journey name="TL-12 Sorting reorders the list and composes with search">
+  <description>
+    Covers FR-11. TaskSort.PRIORITY sorts descending by priority and TaskSort.COMPLETION puts
+    unfinished first; both are stable, so rows of equal rank keep their source order
+    (lib/tasks-api TaskSort.kt:11-25, asserted in TaskSortTest).
+
+    Sorting is a derivation over the cached list, so it must reorder what is displayed without
+    re-reading from the source and without disturbing an active query.
+
+    Seed order and ranks: Renew (High), Reply (Medium), Book dentist (Low, completed),
+    Migrate (Medium).
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Sort tasks"</action>
+    <action>Verify that "Default order", "Priority" and "Unfinished first" are all on screen</action>
+    <action>Tap "Priority"</action>
+    <action>Verify that "Renew domain registration" is the first row</action>
+    <action>Verify that "Book dentist" is the last row</action>
+    <action>Verify that "Reply to design feedback" appears above "Migrate the analytics pipeline to the new warehouse and validate dashboards"</action>
+    <action>Tap the element with the content description "Sort tasks"</action>
+    <action>Tap "Unfinished first"</action>
+    <action>Verify that "Book dentist" is the last row</action>
+    <action>Verify that "Renew domain registration" is the first row</action>
+    <action>Tap the "Search by title" field</action>
+    <action>Type "e" into the "Search by title" field</action>
+    <action>Verify that "Book dentist" is still the last row of the filtered list</action>
+  </actions>
+</journey>

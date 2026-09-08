@@ -1,0 +1,27 @@
+<journey name="DD-04 The relative wording stops at seven days">
+  <description>
+    Covers the boundary in FR-13 that RelativeDateTest pins at the unit level and that nothing has
+    checked on a real screen: MAX_RELATIVE_DAYS is 7 (RelativeDate.kt:79), so a date seven days out
+    is still counted in days and a date eight days out falls back to an absolute, locale-formatted
+    date.
+
+    The cutover is computed in the device's own time zone, so run this on a device whose clock and
+    zone are correct. If the device is near midnight the day count can legitimately shift by one;
+    re-run rather than filing a defect.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the "Book dentist" row</action>
+    <action>Tap "Set date"</action>
+    <action>Select the date exactly seven days from today and tap "OK"</action>
+    <action>Verify that the due date reads "Due in 7 days"</action>
+    <action>Tap "Change date"</action>
+    <action>Select the date exactly eight days from today and tap "OK"</action>
+    <action>Verify that the due date no longer counts days and instead shows a calendar date, beginning with "Due "</action>
+    <action>Tap the "Save" button</action>
+    <action>Verify that the "Book dentist" row on the list shows that same calendar date</action>
+  </actions>
+</journey>

@@ -1,0 +1,27 @@
+<journey name="TL-09 A second delete replaces the first undo offer">
+  <description>
+    KNOWN-DEFECT WATCHLIST. Expected to fail if the current behaviour is judged wrong; see
+    qa/TEST-PLAN.md.
+
+    TaskListUiState holds a single nullable message, so a second delete overwrites the first
+    TaskDeleted before the user can act on it. The first task is then unrecoverable - undo is the
+    only route back, it is offered once, and the offer is gone.
+
+    This journey asserts the behaviour as it stands. Deciding whether a queue, a longer window or an
+    accepted limitation is right is a product call, not a QA one; what the suite owes is that the
+    limitation is visible rather than discovered by a user.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Delete task" on the "Renew domain registration" row</action>
+    <action>Verify that a message reading "Task deleted" is on screen</action>
+    <action>Immediately tap the element with the content description "Delete task" on the "Reply to design feedback" row</action>
+    <action>Verify that a message reading "Task deleted" is on screen</action>
+    <action>Tap the "Undo" action on that message</action>
+    <action>Verify that "Reply to design feedback" is on screen again</action>
+    <action>Verify that "Renew domain registration" is not on screen and is offered no further way back</action>
+  </actions>
+</journey>

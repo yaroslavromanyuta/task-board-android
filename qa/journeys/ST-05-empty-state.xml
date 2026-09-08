@@ -1,0 +1,25 @@
+<journey name="ST-05 An emptied list shows the empty state and hides its own controls">
+  <description>
+    Covers FR-08, and the consequence of FR-10 that is easy to miss: both the search field and the
+    sort action are gated on a non-empty task list (TaskListScreen.kt:92,114), so emptying the list
+    takes them away with it.
+
+    Deleting four rows makes four calls to the source, which is why the dice are off.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Verify that "Renew domain registration" is on screen</action>
+    <action>Tap the topmost element with the content description "Delete task"</action>
+    <action>Tap the topmost element with the content description "Delete task"</action>
+    <action>Tap the topmost element with the content description "Delete task"</action>
+    <action>Tap the topmost element with the content description "Delete task"</action>
+    <action>Verify that "No tasks yet. Tap + to add one." is on screen</action>
+    <action>Verify that no element with the content description "Delete task" is on screen</action>
+    <action>Verify that "Search by title" is not on screen</action>
+    <action>Verify that no element with the content description "Sort tasks" is on screen</action>
+    <action>Verify that an element with the content description "Add task" is on screen</action>
+  </actions>
+</journey>

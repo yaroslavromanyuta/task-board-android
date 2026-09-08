@@ -1,0 +1,30 @@
+<journey name="ST-01 The first load shows a loading state">
+  <description>
+    Covers FR-07 and NFR-02. REQUIREMENTS.md section 9, precedence 1: with no tasks and a load in
+    flight the screen is Loading and nothing else.
+
+    The mock source normally answers in 300-800 ms. A UI dump takes far longer than that - measured
+    on a Samsung SM-G973F, `android layout` needs about 20 s and `uiautomator dump` about 3 s - so
+    the loading state is over before anything can look at it. This journey pins the source to a flat
+    30 s, which leaves room for either tool. That is the whole reason qa_latency_ms exists; the
+    timing is the test's problem, not the app's.
+
+    If you are reading the screen with `adb exec-out uiautomator dump /dev/tty` rather than
+    `android layout`, 8000 is plenty and makes the journey quicker.
+
+    This journey asserts only what is on screen *during* the load. That the rows eventually arrive
+    is TL-01's job.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0 --es qa_latency_ms 30000
+  </description>
+  <actions>
+    <action>Verify that an element with the content description "Loading" is on screen</action>
+    <action>Verify that the title "Tasks" is on screen</action>
+    <action>Verify that "Renew domain registration" is not on screen</action>
+    <action>Verify that "No connection. Check your network and try again." is not on screen</action>
+    <action>Verify that "Retry" is not on screen</action>
+    <action>Verify that "Search by title" is not on screen</action>
+  </actions>
+</journey>

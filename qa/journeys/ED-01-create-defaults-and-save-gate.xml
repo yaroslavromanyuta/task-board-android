@@ -1,0 +1,31 @@
+<journey name="ED-01 The create form opens empty with Save disabled">
+  <description>
+    Covers FR-02. The FAB navigates to Route.TaskEditor(taskId = null), which is create mode: an
+    empty form, priority defaulting to Medium, and Save disabled until a title exists.
+
+    Save being disabled is an affordance only. The rule itself lives in SaveTaskUseCase, which is
+    what ED-02 probes.
+
+    Create mode makes no source call on open, so nothing here can lose a coin flip - but a save
+    does, which is why the dice are off.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Verify that the title "New task" is on screen</action>
+    <action>Verify that "Edit task" is not on screen</action>
+    <action>Verify that the "Title" field is empty</action>
+    <action>Verify that the "Notes (optional)" field is empty</action>
+    <action>Verify that the "Medium" priority chip is selected and that "Low" and "High" are not</action>
+    <action>Verify that "No due date" is on screen</action>
+    <action>Verify that the "Save" button is disabled</action>
+    <action>Type "Buy milk" into the "Title" field</action>
+    <action>Verify that the "Save" button is now enabled</action>
+    <action>Tap the "Save" button</action>
+    <action>Verify that the app returns to the "Tasks" screen</action>
+    <action>Verify that "Buy milk" is on screen</action>
+  </actions>
+</journey>

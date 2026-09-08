@@ -1,0 +1,29 @@
+<journey name="LC-01 Rotating the list keeps its query and sort">
+  <description>
+    Covers NFR-06. Query and sort live in TaskListUiState inside the ViewModel, so a configuration
+    change must not disturb them and must not re-trigger a load: the list is not re-fetched, it is
+    recomposed.
+
+    A rotation that re-runs the initial refresh would also re-roll the dice, which is a second
+    reason this must not happen.
+
+    Preconditions:
+      adb shell settings put system accelerometer_rotation 0
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Sort tasks"</action>
+    <action>Tap "Priority"</action>
+    <action>Tap the "Search by title" field</action>
+    <action>Type "e" into the "Search by title" field</action>
+    <action>Verify that "Renew domain registration" is the first row</action>
+    <action>Using adb, rotate the device to landscape</action>
+    <action>Verify that the "Search by title" field still contains "e"</action>
+    <action>Verify that "Renew domain registration" is still the first row</action>
+    <action>Verify that no "Loading" element and no "Retry" button are on screen</action>
+    <action>Using adb, rotate the device back to portrait</action>
+    <action>Verify that the "Search by title" field still contains "e"</action>
+    <action>Verify that "Renew domain registration" is still the first row</action>
+  </actions>
+</journey>

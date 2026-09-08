@@ -14,15 +14,17 @@ import kotlin.random.Random
 
 /**
  * Stand-in for the backend, built to behave like one rather than like a local list:
- *  - every call suspends for a uniform 300-800 ms, so "loading" is a state a user can actually see;
+ *  - every call suspends for a uniform [latencyMillis] ms, so "loading" is a state a user can
+ *    actually see;
  *  - every call has a [failureRate] chance of throwing `DataException(DataError.Network)`, so the
  *    error path is exercised by simply using the app;
  *  - an unknown id is a deterministic `DataError.NotFound`, never a dice roll;
  *  - the store is a `MutableList<TaskDto>` behind a [Mutex], because callers hit it concurrently;
  *  - ids and `createdAt` are assigned here, from the injected [Clock].
  *
- * [random] is injected and [failureRate] is a `var`, which is what makes the two things a real
- * transport does unpredictably testable: tests seed the dice, and a demo turns them off.
+ * [random] is injected and both [failureRate] and [latencyMillis] are `var`s, which is what makes
+ * the two things a real transport does unpredictably testable: tests seed the dice, and a demo — or
+ * a QA journey — turns them off or slows them down.
  */
 @Singleton
 class FakeTaskApi @Inject constructor(
@@ -39,6 +41,12 @@ class FakeTaskApi @Inject constructor(
      * demo the error state; the default is the ~15% the brief asks for.
      */
     var failureRate: Double = DEFAULT_FAILURE_RATE
+
+    /**
+     * How long a call takes. The default is the 300-800 ms the brief asks for; widening it is how a
+     * scripted UI test gets a loading state that outlives the time it takes to read the screen.
+     */
+    var latencyMillis: LongRange = MIN_LATENCY_MS..MAX_LATENCY_MS
 
     init {
         SEED_TASKS.forEach { seed ->
@@ -85,10 +93,11 @@ class FakeTaskApi @Inject constructor(
      * outside the lock, so concurrent callers overlap the way they would against a real server.
      */
     private suspend fun <T> call(block: () -> T): T {
-        val (latencyMillis, failed) = mutex.withLock {
-            random.nextLong(MIN_LATENCY_MS, MAX_LATENCY_MS + 1) to (random.nextDouble() < failureRate)
+        val (delayMillis, failed) = mutex.withLock {
+            random.nextLong(latencyMillis.first, latencyMillis.last + 1) to
+                (random.nextDouble() < failureRate)
         }
-        delay(latencyMillis)
+        delay(delayMillis)
         if (failed) throw DataException(DataError.Network)
         return mutex.withLock { block() }
     }

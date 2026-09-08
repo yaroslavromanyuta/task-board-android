@@ -1,0 +1,27 @@
+<journey name="DD-02 The editor can set, change and clear a due date">
+  <description>
+    Covers FR-13's write half. The due-date row has three states and the controls change with them:
+    with no date it reads "No due date" and offers "Set date"; with a date it offers "Change date"
+    and additionally "Clear date" (TaskEditorScreen.kt:200-232).
+
+    "Book dentist" starts with no due date, which makes it the row that exercises all three.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the "Book dentist" row</action>
+    <action>Verify that "No due date" is on screen</action>
+    <action>Verify that "Set date" is on screen and "Clear date" is not</action>
+    <action>Tap "Set date"</action>
+    <action>Verify that a date picker dialog is on screen with "OK" and "Cancel" buttons</action>
+    <action>Select a date in the picker and tap "OK"</action>
+    <action>Verify that "No due date" is no longer on screen</action>
+    <action>Verify that "Change date" is now on screen instead of "Set date"</action>
+    <action>Verify that "Clear date" is now on screen</action>
+    <action>Tap "Clear date"</action>
+    <action>Verify that "No due date" is on screen again</action>
+    <action>Verify that "Set date" is on screen and "Clear date" is not</action>
+  </actions>
+</journey>

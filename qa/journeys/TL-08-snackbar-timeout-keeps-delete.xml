@@ -1,0 +1,22 @@
+<journey name="TL-08 Letting the undo offer expire keeps the task deleted">
+  <description>
+    Covers FR-12's default. Undo is an offer, not a confirmation dialog: a snackbar dismissed by
+    timeout resolves to SnackbarResult.Dismissed, which routes to onMessageShown and clears the
+    message without restoring anything (TaskListScreen.kt:170-177).
+
+    The dismissal is time-based rather than input-based, so this journey waits the snackbar out.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Delete task" on the "Book dentist" row</action>
+    <action>Verify that a message reading "Task deleted" is on screen</action>
+    <action>Wait for that message to disappear on its own without tapping "Undo"</action>
+    <action>Verify that "Task deleted" is no longer on screen</action>
+    <action>Verify that "Undo" is no longer on screen</action>
+    <action>Verify that "Book dentist" is not in the list</action>
+    <action>Verify that exactly three elements with the content description "Delete task" are on screen</action>
+  </actions>
+</journey>

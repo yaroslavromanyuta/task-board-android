@@ -1,0 +1,25 @@
+<journey name="DD-03 Cancelling the date picker leaves the date untouched">
+  <description>
+    Covers FR-13's dismissal path. Cancel must not commit the highlighted date, and it must not
+    clear an existing one either - a picker opened by "Change date" starts on the current value, so
+    a careless dismiss handler would be easy to miss.
+
+    "Renew domain registration" already carries a date, which is what makes this the row to use.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the "Renew domain registration" row</action>
+    <action>Verify that "Due in 3 days" is on screen</action>
+    <action>Tap "Change date"</action>
+    <action>Verify that a date picker dialog is on screen</action>
+    <action>Select a different date in the picker and tap "Cancel"</action>
+    <action>Verify that the date picker dialog is no longer on screen</action>
+    <action>Verify that "Due in 3 days" is still on screen</action>
+    <action>Verify that "No due date" is not on screen</action>
+    <action>Tap the element with the content description "Back"</action>
+    <action>Verify that the "Renew domain registration" row still shows "Due in 3 days"</action>
+  </actions>
+</journey>
