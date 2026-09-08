@@ -55,7 +55,12 @@ fun TaskRow(
     modifier: Modifier = Modifier,
     now: Instant = remember { Instant.now() },
 ) {
-    val toggleLabel = stringResource(R.string.task_list_action_toggle)
+    // The label has to name the action the tap performs, or a screen reader announces the
+    // opposite of what happens on a row that is already done (NFR-09).
+    val toggleLabel = stringResource(
+        if (task.isCompleted) R.string.task_list_action_toggle_done
+        else R.string.task_list_action_toggle,
+    )
     Row(
         modifier = modifier
             .fillMaxWidth()

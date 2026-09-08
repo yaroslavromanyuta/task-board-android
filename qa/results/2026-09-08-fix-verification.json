@@ -1,0 +1,223 @@
+{
+  "run": {
+    "date": "2026-09-08",
+    "suite": "fix verification - the three journeys that failed on the previous build",
+    "device": {
+      "serial": "RF8M32EDAQD",
+      "model": "Samsung SM-G973F",
+      "android": "12",
+      "api": 31,
+      "resolution": "1080x2280",
+      "density": 420
+    },
+    "build": {
+      "variant": "debug",
+      "branch": "fix/qa-run-defects"
+    },
+    "fixes": {
+      "TL-08": "issue #7 - duration = SnackbarDuration.Long",
+      "LC-03": "issue #8 - rememberSaveable for the picker flag",
+      "AX-02": "issue #9 - the toggle label is picked on task.isCompleted"
+    },
+    "note": "Each journey also carries regression checks beyond its own actions: that Undo still works inside the shortened window, that Cancel still dismisses the picker, and that unfinished rows still read \"Mark complete\". All held."
+  },
+  "totals": {
+    "journeys": 3,
+    "journeys_passed": 3,
+    "journeys_failed": 0,
+    "actions": 22,
+    "actions_passed": 22,
+    "actions_failed": 0,
+    "actions_skipped": 0
+  },
+  "journeys": [
+    {
+      "journey": "AX-02 The row checkbox announces the action its tap performs",
+      "id": "AX-02",
+      "file": "qa/journeys/AX-02-checkbox-label-static.xml",
+      "status": "PASSED",
+      "results": [
+        {
+          "action": "Verify that the \"Book dentist\" row has a checked checkbox",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ],
+          "comment": "The completed row reported content-desc=\"Mark incomplete\"; the three unfinished rows still reported \"Mark complete\", and the label followed the state when the checkbox was tapped."
+        },
+        {
+          "action": "Verify that the checkbox on the \"Book dentist\" row is described as \"Mark incomplete\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the checkbox on every unfinished row is described as \"Mark complete\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the checkbox on the \"Book dentist\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the \"Book dentist\" row now has an unchecked checkbox described as \"Mark complete\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "LC-03 The date picker survives a rotation",
+      "id": "LC-03",
+      "file": "qa/journeys/LC-03-rotate-with-picker-open.xml",
+      "status": "PASSED",
+      "results": [
+        {
+          "action": "Tap the \"Book dentist\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ],
+          "comment": "The picker stayed open through portrait -> landscape -> portrait, with the month and the highlighted date intact. Cancel was separately confirmed to still dismiss it."
+        },
+        {
+          "action": "Verify that \"No due date\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap \"Set date\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that a date picker dialog is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Using adb, rotate the device to landscape",
+          "status": "PASSED",
+          "commands": [
+            "adb shell settings put system user_rotation 1",
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the date picker dialog is still on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Using adb, rotate the device back to portrait",
+          "status": "PASSED",
+          "commands": [
+            "adb shell settings put system user_rotation 1",
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the date picker dialog is still on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap \"Cancel\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the date picker dialog is dismissed and \"No due date\" is still shown",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TL-08 The undo offer expires and the task stays deleted",
+      "id": "TL-08",
+      "file": "qa/journeys/TL-08-snackbar-timeout-keeps-delete.xml",
+      "status": "PASSED",
+      "results": [
+        {
+          "action": "Tap the element with the content description \"Delete task\" on the \"Book dentist\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ],
+          "comment": "The snackbar cleared itself after about ten seconds, which is SnackbarDuration.Long. Undo was separately confirmed to still work inside that window."
+        },
+        {
+          "action": "Verify that a message reading \"Task deleted\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Wait for that message to disappear on its own without tapping \"Undo\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty   # polled every second for 30 s"
+          ]
+        },
+        {
+          "action": "Verify that \"Task deleted\" is no longer on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Undo\" is no longer on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Book dentist\" is not in the list",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that exactly three elements with the content description \"Delete task\" are on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    }
+  ]
+}

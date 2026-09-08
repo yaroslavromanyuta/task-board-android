@@ -1,10 +1,19 @@
-<journey name="TL-08 Letting the undo offer expire keeps the task deleted">
+<journey name="TL-08 The undo offer expires and the task stays deleted">
   <description>
     Covers FR-12's default. Undo is an offer, not a confirmation dialog: a snackbar dismissed by
     timeout resolves to SnackbarResult.Dismissed, which routes to onMessageShown and clears the
-    message without restoring anything (TaskListScreen.kt:170-177).
+    message without restoring anything (TaskListScreen.kt:177-181).
+
+    REGRESSION GUARD (issue #7). This journey failed on the build of 2026-09-08: the snackbar never
+    expired at all. TaskListScreen called showSnackbar(message, actionLabel) without a duration, and
+    Material3 reads an action label as a reason to default to SnackbarDuration.Indefinite - so the
+    undo offer sat over the bottom of the list until it was tapped or swiped away, and
+    TaskListUiState.message never returned to null. The duration is now stated rather than
+    defaulted. Keep this journey: a future edit that drops the argument brings the defect straight
+    back, and no unit test can see it, because the ViewModel was correct all along.
 
     The dismissal is time-based rather than input-based, so this journey waits the snackbar out.
+    SnackbarDuration.Long is about ten seconds; allow up to thirty before calling it a failure.
 
     Preconditions:
       adb shell am force-stop com.rounds.test.to_dolist

@@ -1,16 +1,14 @@
-<journey name="LC-03 Rotating with the date picker open loses the dialog">
+<journey name="LC-03 The date picker survives a rotation">
   <description>
-    KNOWN-DEFECT WATCHLIST. Expected to fail if the current behaviour is judged wrong; see
-    qa/TEST-PLAN.md.
+    Covers NFR-06 for the one piece of editor state that does not live in the ViewModel: whether the
+    date picker is open.
 
-    The editor holds the picker's visibility in `var picking by remember` rather than
-    rememberSaveable (TaskEditorScreen.kt:204). remember does not survive a configuration change, so
-    rotating while the picker is open closes it and drops the date the user had highlighted. The
-    surrounding form survives, because that state is in the ViewModel - the dialog is the one piece
-    that is not.
-
-    NFR-06 asks for state intact across configuration change. Whether an open dialog counts as state
-    is the question this journey puts on the table; the one-word fix is rememberSaveable.
+    REGRESSION GUARD (issue #8). This journey failed on the build of 2026-09-08. The editor held the
+    picker's visibility in `var picking by remember`, which does not survive a configuration change,
+    so rotating with the picker open closed it and dropped the date the user had highlighted. The
+    form behind it survived, because that state is in the ViewModel - the dialog was the one gap
+    left. It is now rememberSaveable, and rememberDatePickerState was already saveable, so the
+    highlighted date comes back with it.
 
     Preconditions:
       adb shell settings put system accelerometer_rotation 0
@@ -24,6 +22,9 @@
     <action>Verify that a date picker dialog is on screen</action>
     <action>Using adb, rotate the device to landscape</action>
     <action>Verify that the date picker dialog is still on screen</action>
-    <action>Verify that "Book dentist" is still in the "Title" field</action>
+    <action>Using adb, rotate the device back to portrait</action>
+    <action>Verify that the date picker dialog is still on screen</action>
+    <action>Tap "Cancel"</action>
+    <action>Verify that the date picker dialog is dismissed and "No due date" is still shown</action>
   </actions>
 </journey>

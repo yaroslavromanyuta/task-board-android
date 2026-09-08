@@ -1,17 +1,15 @@
-<journey name="AX-02 The row checkbox announces the same label whatever its state">
+<journey name="AX-02 The row checkbox announces the action its tap performs">
   <description>
-    KNOWN-DEFECT WATCHLIST. Expected to fail if the current behaviour is judged wrong; see
-    qa/TEST-PLAN.md.
+    Covers NFR-09 where it is easiest to get wrong: a control that carries a description which is
+    present but inaccurate, which reads as authoritative and is worse than a missing one.
 
-    TaskRow sets a single static content description on the checkbox (TaskRow.kt:69, the string
-    task_list_action_toggle = "Mark complete"). It does not flip to "Mark incomplete" when the task
-    is already done, so TalkBack announces the wrong action on every completed row: a user is told
-    they can mark complete something that already is.
+    REGRESSION GUARD (issue #9). This journey failed on the build of 2026-09-08. TaskRow set one
+    static content description, task_list_action_toggle ("Mark complete"), regardless of state - so
+    TalkBack told a user they could complete a task that was already done, while the checked state
+    beside it said otherwise. The label is now picked on task.isCompleted.
 
-    The checked state itself is exposed correctly, so a screen reader is not left with nothing - but
-    the label contradicts it. NFR-09 asks that icon-only controls carry descriptions; it is silent
-    on whether they must stay accurate, which is what makes this a decision rather than an
-    unambiguous bug.
+    Backlog task TB-308 verified NFR-09 by reading the code, which is exactly the class of defect
+    reading does not catch.
 
     Preconditions:
       adb shell am force-stop com.rounds.test.to_dolist
@@ -19,6 +17,9 @@
   </description>
   <actions>
     <action>Verify that the "Book dentist" row has a checked checkbox</action>
-    <action>Verify that the checkbox on the "Book dentist" row is described as something other than "Mark complete", appropriate to a task that is already complete</action>
+    <action>Verify that the checkbox on the "Book dentist" row is described as "Mark incomplete"</action>
+    <action>Verify that the checkbox on every unfinished row is described as "Mark complete"</action>
+    <action>Tap the checkbox on the "Book dentist" row</action>
+    <action>Verify that the "Book dentist" row now has an unchecked checkbox described as "Mark complete"</action>
   </actions>
 </journey>

@@ -54,7 +54,7 @@ notice immediately, because it takes their list away.
 | TL-05 | Deleting a task removes it and announces it | FR-04, FR-12 |
 | TL-06 | Undo restores the task, at the bottom, with a new id | FR-12 |
 | TL-07 | Undoing a completed task brings it back completed | FR-12 |
-| TL-08 | Letting the undo offer expire keeps the task deleted | FR-12 |
+| TL-08 | The undo offer expires and the task stays deleted | FR-12 🔧 |
 | TL-09 | A second delete replaces the first undo offer | FR-12 ⚠ |
 | TL-10 | Undo under an active search restores outside the filter | FR-10 + FR-12 |
 | TL-11 | Search matches titles only, case-insensitively | FR-10 |
@@ -98,7 +98,7 @@ loses the user's typing.
 |---|---|---|
 | LC-01 | Rotating the list keeps its query and sort | NFR-06 |
 | LC-02 | Rotating the editor keeps a half-filled form | NFR-06 |
-| LC-03 | Rotating with the date picker open loses the dialog | NFR-06 ⚠ |
+| LC-03 | The date picker survives a rotation | NFR-06 🔧 |
 | LC-04 | A half-typed form survives process death | NFR-07 |
 | LC-05 | A cold start returns to the four seed rows | D-2 |
 
@@ -110,7 +110,7 @@ other journey depends on `force-stop` restoring the seed rows exactly.
 | Id | Scenario | Covers |
 |---|---|---|
 | AX-01 | Every icon-only control carries a description | NFR-09 |
-| AX-02 | The row checkbox announces the same label whatever its state | NFR-09 ⚠ |
+| AX-02 | The row checkbox announces the action its tap performs | NFR-09 🔧 |
 | TH-01 | Dark mode keeps the priority colours apart | FR-14, TB-705, TB-706 |
 
 Both AX journeys cover ground that `BACKLOG.md` task TB-308 verified by reading the code. This is
@@ -125,7 +125,9 @@ touches both screens, both failure channels, navigation and a configuration chan
 ST-01  ST-04  TL-01  TL-05  TL-06  ED-01  ED-04  LC-01
 ```
 
-**Full — all 37.** Force-stop between each one. Three fail on the current build: TL-08, LC-03 and AX-02.
+**Full — all 37.** Force-stop between each one. All 37 pass on the current build.
+
+⚠ marks a journey that asserts behaviour someone still has to rule on; 🔧 marks one that was failing and is now a regression guard over a fix.
 
 ## Run log
 
@@ -164,8 +166,8 @@ failing action).
 | Failed | Why |
 |---|---|
 | **TL-08** | **New defect.** The undo snackbar never expires — see the watchlist below |
-| **LC-03** | Predicted. The date picker is dismissed by rotation |
-| **AX-02** | Predicted. A completed row still reports `content-desc="Mark complete"` |
+| **LC-03** ✅ #8 | Predicted. The date picker is dismissed by rotation |
+| **AX-02** ✅ #9 | Predicted. A completed row still reports `content-desc="Mark complete"` |
 
 Three journeys needed a second attempt before the app's behaviour could be read at all, and none of
 the three was an app fault:
@@ -182,24 +184,46 @@ All three are now written up in `README.md`, because they change how any future 
 
 Everything else passed first time, including all seven editor journeys and all four due-date ones.
 
+### 2026-09-08 — fix verification
+
+Same device. Results in
+[`results/2026-09-08-fix-verification.json`](results/2026-09-08-fix-verification.json).
+
+All three failing journeys pass against the fixes for issues #7, #8 and #9. **22 actions, all
+passed**, including the regression checks each one carries beyond its own steps: Undo still works
+inside the shortened snackbar window, Cancel still dismisses the picker, and unfinished rows still
+read "Mark complete".
+
+The snackbar now clears after about ten seconds — `SnackbarDuration.Long`, measured on device.
+
+`./gradlew test lint` stayed green: 77 unit tests, no lint errors. None of the three fixes was
+visible to a unit test, which is the point.
+
 ## Known-defect watchlist
 
 Six entries. Five were written in advance as journeys asserting behaviour that may well be wrong;
-the sixth, TL-08, was found by running them. Each names the trade-off and leaves the call to product.
+the sixth, TL-08, was found by running them.
 
-| Id | What happens today | Why it might be wrong | The fix, if it is |
+**Three are now fixed** — TL-08 (#7), LC-03 (#8) and AX-02 (#9) — and their journeys have been
+rewritten as regression guards rather than defect probes. They are kept in the table because the
+reasoning is worth not losing.
+
+**Three remain open.** TL-09, ED-05 and ED-02 assert the current behaviour, so they pass; passing
+*is* the finding, and each names a trade-off that is product's call rather than QA's.
+
+| Id | What the journey found | Why it matters | The fix |
 |---|---|---|---|
-| **TL-08** ⛔ | The undo snackbar never goes away. `TaskListScreen.kt:168-171` calls `showSnackbar(message, actionLabel)` with no `duration`, and Material3 defaults to `SnackbarDuration.Indefinite` whenever an `actionLabel` is present — so "Task deleted" sits over the list until the user taps Undo or swipes it off, and `withDismissAction` is false, so there is no × either | The failure snackbar next to it *is* `Short`, which is what makes this look unintended rather than chosen. It permanently occludes the bottom of the list, and `message` stays set in the state the whole time. Confirmed on device: still on screen after 25 s | Pass `duration = SnackbarDuration.Long` explicitly |
-| **TL-09** | `TaskListUiState` holds one nullable `message`, so a second delete overwrites the first `TaskDeleted` before the user can act on it | Undo is the only route back and it is offered exactly once. Delete two rows quickly and the first is unrecoverable, silently | A queue of pending deletes, or a confirmation on the second |
-| **ED-05** | Back discards an unsaved edit with no prompt; `onBack` and `onDone` both go to `navigateUp` (`TodoNavHost.kt:31-32`) | Unlike a delete, this has no snackbar behind it. A long note typed and lost is gone with no trace | A "discard changes?" dialog when the form is dirty |
-| **LC-03** | The date picker's visibility is `remember`, not `rememberSaveable` (`TaskEditorScreen.kt:204`), so rotation closes it | NFR-06 asks for state intact across a configuration change. Whether an open dialog counts is the open question | One word: `rememberSaveable` |
-| **AX-02** | The row checkbox is described as "Mark complete" whatever its state (`TaskRow.kt:69`) | TalkBack tells a user they can complete a task that is already complete. The checked state is exposed correctly, so the label contradicts it | A second string, chosen on `isCompleted` |
-| **ED-02** | `canSave` is already false for a whitespace-only title, so `SaveTaskUseCase` is never reached and "A title is required." cannot appear | Not a functional break — the rule holds. But a string, a `supportingText` branch and a tested ViewModel path are unreachable dead UI | Either drop the inline error, or let Save through and rely on the use case |
+| **TL-08** ✅ #7 | *Fixed.* The undo snackbar never went away. `TaskListScreen.kt:168-171` calls `showSnackbar(message, actionLabel)` with no `duration`, and Material3 defaults to `SnackbarDuration.Indefinite` whenever an `actionLabel` is present — so "Task deleted" sits over the list until the user taps Undo or swipes it off, and `withDismissAction` is false, so there is no × either | The failure snackbar next to it *is* `Short`, which is what makes this look unintended rather than chosen. It permanently occludes the bottom of the list, and `message` stays set in the state the whole time. Confirmed on device: still on screen after 25 s | Pass `duration = SnackbarDuration.Long` explicitly |
+| **TL-09** ⚠ open | `TaskListUiState` holds one nullable `message`, so a second delete overwrites the first `TaskDeleted` before the user can act on it | Undo is the only route back and it is offered exactly once. Delete two rows quickly and the first is unrecoverable, silently | A queue of pending deletes, or a confirmation on the second |
+| **ED-05** ⚠ open | Back discards an unsaved edit with no prompt; `onBack` and `onDone` both go to `navigateUp` (`TodoNavHost.kt:31-32`) | Unlike a delete, this has no snackbar behind it. A long note typed and lost is gone with no trace | A "discard changes?" dialog when the form is dirty |
+| **LC-03** ✅ #8 | *Fixed.* The picker's visibility was `remember`, not `rememberSaveable`, so a rotation closed it | NFR-06 asks for state intact across a configuration change. Whether an open dialog counts is the open question | One word: `rememberSaveable` |
+| **AX-02** ✅ #9 | *Fixed.* The row checkbox was described as "Mark complete" whatever its state | TalkBack tells a user they can complete a task that is already complete. The checked state is exposed correctly, so the label contradicts it | A second string, chosen on `isCompleted` |
+| **ED-02** ⚠ open | `canSave` is already false for a whitespace-only title, so `SaveTaskUseCase` is never reached and "A title is required." cannot appear | Not a functional break — the rule holds. But a string, a `supportingText` branch and a tested ViewModel path are unreachable dead UI | Either drop the inline error, or let Save through and rely on the use case |
 
-Three of these are documentary: TL-09, ED-05 and ED-02 assert the current behaviour, so they pass,
-and passing *is* the finding. Two assert the behaviour that ought to hold, so they fail: LC-03 and
-AX-02. TL-08 was not predicted at all — it failed on an assumption the journey made about how a
-snackbar behaves, which turned out to be a defect in the app rather than in the journey.
+TL-08 was not predicted at all. It failed on an assumption its own journey made about how a
+snackbar behaves — and the assumption turned out to be right about snackbars and wrong about this
+one, which made it a defect in the app rather than in the journey. That is the case for writing the
+obvious assertion down even when it looks too obvious to fail.
 
 ## Traceability
 
