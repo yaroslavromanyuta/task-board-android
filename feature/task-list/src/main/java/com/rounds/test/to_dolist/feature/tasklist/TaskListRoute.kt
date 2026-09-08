@@ -26,6 +26,10 @@ fun TaskListRoute(
         onToggleCompleted = viewModel::onToggleCompleted,
         onDelete = viewModel::onDelete,
         onRetry = viewModel::onRetry,
+        onQueryChange = viewModel::onQueryChange,
+        onSortChange = viewModel::onSortChange,
+        onUndoDelete = viewModel::onUndoDelete,
+        onMessageShown = viewModel::onMessageShown,
         modifier = modifier,
     )
 }
