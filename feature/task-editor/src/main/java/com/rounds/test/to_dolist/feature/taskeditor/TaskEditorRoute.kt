@@ -33,6 +33,7 @@ fun TaskEditorRoute(
         onTitleChange = viewModel::onTitleChange,
         onNotesChange = viewModel::onNotesChange,
         onPriorityChange = viewModel::onPriorityChange,
+        onDueDateChange = viewModel::onDueDateChange,
         onSave = viewModel::onSave,
         onBack = onBack,
         onRetry = viewModel::onRetry,

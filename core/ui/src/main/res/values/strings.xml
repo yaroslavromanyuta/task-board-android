@@ -13,4 +13,18 @@
     <string name="core_ui_error_not_found">This task no longer exists.</string>
     <string name="core_ui_error_conflict">This task changed elsewhere. Refresh and try again.</string>
     <string name="core_ui_error_unknown">Something went wrong.</string>
+
+    <!-- Due dates, worded the way a person would say them. -->
+    <string name="core_ui_due_today">Due today</string>
+    <string name="core_ui_due_tomorrow">Due tomorrow</string>
+    <string name="core_ui_due_yesterday">Due yesterday</string>
+    <string name="core_ui_due_on">Due %1$s</string>
+    <plurals name="core_ui_due_in_days">
+        <item quantity="one">Due in %1$d day</item>
+        <item quantity="other">Due in %1$d days</item>
+    </plurals>
+    <plurals name="core_ui_due_days_ago">
+        <item quantity="one">Due %1$d day ago</item>
+        <item quantity="other">Due %1$d days ago</item>
+    </plurals>
 </resources>

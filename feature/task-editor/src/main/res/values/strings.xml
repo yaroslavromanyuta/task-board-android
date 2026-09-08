@@ -4,6 +4,13 @@
     <string name="task_editor_field_title">Title</string>
     <string name="task_editor_field_notes">Notes (optional)</string>
     <string name="task_editor_field_priority">Priority</string>
+    <string name="task_editor_field_due_date">Due date</string>
+    <string name="task_editor_due_date_none">No due date</string>
+    <string name="task_editor_action_set_due_date">Set date</string>
+    <string name="task_editor_action_change_due_date">Change date</string>
+    <string name="task_editor_action_clear_due_date">Clear date</string>
+    <string name="task_editor_action_confirm_due_date">OK</string>
+    <string name="task_editor_action_cancel">Cancel</string>
     <string name="task_editor_error_title_blank">A title is required.</string>
     <string name="task_editor_action_save">Save</string>
 </resources>

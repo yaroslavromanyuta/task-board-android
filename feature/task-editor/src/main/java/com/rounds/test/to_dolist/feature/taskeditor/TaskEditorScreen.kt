@@ -3,6 +3,7 @@ package com.rounds.test.to_dolist.feature.taskeditor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -10,6 +11,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -22,19 +25,27 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.rounds.test.to_dolist.core.ui.component.ErrorMessage
 import com.rounds.test.to_dolist.core.ui.component.Loading
 import com.rounds.test.to_dolist.core.ui.error.asMessage
 import com.rounds.test.to_dolist.core.ui.theme.TodoListTheme
+import com.rounds.test.to_dolist.core.ui.format.asText
+import com.rounds.test.to_dolist.core.ui.format.relativeDateOf
 import com.rounds.test.to_dolist.tasks.error.DataError
 import com.rounds.test.to_dolist.tasks.model.TaskPriority
+import java.time.Instant
 import com.rounds.test.to_dolist.core.ui.R as CoreUiR
 
 /**
@@ -52,6 +63,7 @@ fun TaskEditorScreen(
     onTitleChange: (String) -> Unit,
     onNotesChange: (String) -> Unit,
     onPriorityChange: (TaskPriority) -> Unit,
+    onDueDateChange: (Instant?) -> Unit,
     onSave: () -> Unit,
     onBack: () -> Unit,
     onRetry: () -> Unit,
@@ -112,6 +124,7 @@ fun TaskEditorScreen(
                 onTitleChange = onTitleChange,
                 onNotesChange = onNotesChange,
                 onPriorityChange = onPriorityChange,
+                onDueDateChange = onDueDateChange,
                 modifier = contentModifier,
             )
         }
@@ -124,6 +137,7 @@ private fun TaskEditorForm(
     onTitleChange: (String) -> Unit,
     onNotesChange: (String) -> Unit,
     onPriorityChange: (TaskPriority) -> Unit,
+    onDueDateChange: (Instant?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -168,6 +182,92 @@ private fun TaskEditorForm(
                 )
             }
         }
+
+        Text(
+            text = stringResource(R.string.task_editor_field_due_date),
+            style = MaterialTheme.typography.labelLarge,
+        )
+        DueDateField(dueDate = state.dueDate, onDueDateChange = onDueDateChange)
+    }
+}
+
+/**
+ * The due date is optional, so the control has to offer both halves: setting one and taking it away
+ * again. Clearing is a button rather than a "no date" entry in the picker, because a picker that can
+ * only pick is easier to reason about.
+ */
+@Composable
+private fun DueDateField(
+    dueDate: Instant?,
+    onDueDateChange: (Instant?) -> Unit,
+) {
+    var picking by remember { mutableStateOf(false) }
+    val now = remember { Instant.now() }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = dueDate
+                ?.let { relativeDateOf(target = it, now = now).asText() }
+                ?: stringResource(R.string.task_editor_due_date_none),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+
+        TextButton(onClick = { picking = true }) {
+            Text(
+                stringResource(
+                    if (dueDate == null) R.string.task_editor_action_set_due_date
+                    else R.string.task_editor_action_change_due_date,
+                ),
+            )
+        }
+        if (dueDate != null) {
+            TextButton(onClick = { onDueDateChange(null) }) {
+                Text(stringResource(R.string.task_editor_action_clear_due_date))
+            }
+        }
+    }
+
+    if (picking) {
+        DueDatePicker(
+            initial = dueDate,
+            onDismiss = { picking = false },
+            onPicked = { picked ->
+                picking = false
+                onDueDateChange(picked)
+            },
+        )
+    }
+}
+
+@Composable
+private fun DueDatePicker(
+    initial: Instant?,
+    onDismiss: () -> Unit,
+    onPicked: (Instant) -> Unit,
+) {
+    val pickerState = rememberDatePickerState(initialSelectedDateMillis = initial?.toEpochMilli())
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = { pickerState.selectedDateMillis?.let { onPicked(Instant.ofEpochMilli(it)) } },
+                enabled = pickerState.selectedDateMillis != null,
+            ) {
+                Text(stringResource(R.string.task_editor_action_confirm_due_date))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.task_editor_action_cancel))
+            }
+        },
+    ) {
+        DatePicker(state = pickerState)
     }
 }
 
@@ -180,7 +280,7 @@ private fun TaskPriority.label(): String = stringResource(
     },
 )
 
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
 private fun TaskEditorCreatePreview() {
     TodoListTheme(dynamicColor = false) {
@@ -189,6 +289,7 @@ private fun TaskEditorCreatePreview() {
             onTitleChange = {},
             onNotesChange = {},
             onPriorityChange = {},
+            onDueDateChange = {},
             onSave = {},
             onBack = {},
             onRetry = {},
@@ -197,7 +298,7 @@ private fun TaskEditorCreatePreview() {
     }
 }
 
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
 private fun TaskEditorEditPreview() {
     TodoListTheme(dynamicColor = false) {
@@ -207,10 +308,12 @@ private fun TaskEditorEditPreview() {
                 title = "Renew domain registration",
                 notes = "Expires end of month",
                 priority = TaskPriority.HIGH,
+                dueDate = Instant.parse("2026-09-11T09:00:00Z"),
             ),
             onTitleChange = {},
             onNotesChange = {},
             onPriorityChange = {},
+            onDueDateChange = {},
             onSave = {},
             onBack = {},
             onRetry = {},
@@ -220,7 +323,7 @@ private fun TaskEditorEditPreview() {
 }
 
 /** The edit-mode load failed: there is nothing to edit, so the form gives way entirely. */
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
 private fun TaskEditorLoadErrorPreview() {
     TodoListTheme(dynamicColor = false) {
@@ -229,6 +332,7 @@ private fun TaskEditorLoadErrorPreview() {
             onTitleChange = {},
             onNotesChange = {},
             onPriorityChange = {},
+            onDueDateChange = {},
             onSave = {},
             onBack = {},
             onRetry = {},
