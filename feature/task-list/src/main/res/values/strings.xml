@@ -1,0 +1,7 @@
+<resources>
+    <string name="task_list_title">Tasks</string>
+    <string name="task_list_empty">No tasks yet. Tap + to add one.</string>
+    <string name="task_list_action_add">Add task</string>
+    <string name="task_list_action_delete">Delete task</string>
+    <string name="task_list_action_toggle">Mark complete</string>
+</resources>

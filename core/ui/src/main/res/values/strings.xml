@@ -1,0 +1,16 @@
+<resources>
+    <!-- Shared UI vocabulary. Lives in :core:ui so both feature modules word the same state identically. -->
+    <string name="core_ui_loading">Loading</string>
+    <string name="core_ui_action_retry">Retry</string>
+    <string name="core_ui_action_back">Back</string>
+
+    <string name="core_ui_priority_low">Low</string>
+    <string name="core_ui_priority_medium">Medium</string>
+    <string name="core_ui_priority_high">High</string>
+
+    <string name="core_ui_error_network">No connection. Check your network and try again.</string>
+    <string name="core_ui_error_timeout">The request took too long. Try again.</string>
+    <string name="core_ui_error_not_found">This task no longer exists.</string>
+    <string name="core_ui_error_conflict">This task changed elsewhere. Refresh and try again.</string>
+    <string name="core_ui_error_unknown">Something went wrong.</string>
+</resources>

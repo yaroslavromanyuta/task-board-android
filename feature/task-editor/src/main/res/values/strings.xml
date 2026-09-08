@@ -1,0 +1,9 @@
+<resources>
+    <string name="task_editor_title_create">New task</string>
+    <string name="task_editor_title_edit">Edit task</string>
+    <string name="task_editor_field_title">Title</string>
+    <string name="task_editor_field_notes">Notes (optional)</string>
+    <string name="task_editor_field_priority">Priority</string>
+    <string name="task_editor_error_title_blank">A title is required.</string>
+    <string name="task_editor_action_save">Save</string>
+</resources>
