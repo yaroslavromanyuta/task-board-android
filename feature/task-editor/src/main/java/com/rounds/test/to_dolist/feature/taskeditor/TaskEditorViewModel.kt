@@ -2,8 +2,12 @@ package com.rounds.test.to_dolist.feature.taskeditor
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.navigation.toRoute
+import androidx.lifecycle.viewModelScope
 import com.rounds.test.to_dolist.navigation.Route
+import com.rounds.test.to_dolist.tasks.error.ValidationException
+import com.rounds.test.to_dolist.tasks.error.asDataError
+import com.rounds.test.to_dolist.tasks.model.TaskDraft
+import com.rounds.test.to_dolist.tasks.model.TaskPriority
 import com.rounds.test.to_dolist.tasks.usecase.GetTaskUseCase
 import com.rounds.test.to_dolist.tasks.usecase.SaveTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,14 +15,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
  * Reads its argument from [SavedStateHandle] rather than from a composable parameter, so the screen
- * survives process death without `:app` having to re-supply anything.
+ * survives process death without `:app` having to re-supply anything. The presence of an id is the
+ * only thing that separates "add" from "view / edit": there is no mode flag to get out of step.
  *
- * Field edits are handled here already — the form is genuinely usable — while everything that needs
- * the data layer is left marked. That keeps the skeleton navigable instead of crashing on first tap.
+ * Validation is not repeated here. [SaveTaskUseCase] owns the blank-title rule, and this class maps
+ * the failure it returns onto the field the user has to fix — which is why the rule cannot drift
+ * between this screen and any future caller.
  */
 @HiltViewModel
 class TaskEditorViewModel @Inject constructor(
@@ -27,13 +34,21 @@ class TaskEditorViewModel @Inject constructor(
     private val saveTask: SaveTaskUseCase,
 ) : ViewModel() {
 
-    private val route: Route.TaskEditor = savedStateHandle.toRoute()
+    /**
+     * Null means "create". Read once here, by the name [Route.TaskEditor] publishes, so the rest of
+     * the class never re-derives the mode. `toRoute()` would express the same thing with the route
+     * type, but it decodes through an Android runtime and returns nothing in a JVM unit test, which
+     * would leave the edit path untested; `RouteTest` guards the name instead.
+     */
+    private val taskId: String? = savedStateHandle[Route.TaskEditor.TASK_ID_ARG]
 
-    private val _uiState = MutableStateFlow(TaskEditorUiState(taskId = route.taskId))
+    private val _uiState = MutableStateFlow(
+        TaskEditorUiState(taskId = taskId, isLoading = taskId != null),
+    )
     val uiState: StateFlow<TaskEditorUiState> = _uiState.asStateFlow()
 
     init {
-        // TODO(data layer): when route.taskId != null, load it via getTask() and seed the form.
+        taskId?.let(::load)
     }
 
     fun onTitleChange(value: String) {
@@ -44,25 +59,79 @@ class TaskEditorViewModel @Inject constructor(
         _uiState.update { it.copy(notes = value) }
     }
 
-    fun onPriorityChange(value: com.rounds.test.to_dolist.tasks.model.TaskPriority) {
+    fun onPriorityChange(value: TaskPriority) {
         _uiState.update { it.copy(priority = value) }
     }
 
     /**
-     * @param onSaved invoked once the task is persisted; navigation is the caller's business, not the
-     * ViewModel's.
+     * Success is reported through [TaskEditorUiState.isSaved] rather than a callback: the call is
+     * asynchronous, and a lambda invoked from `viewModelScope` would not know whether the screen it
+     * was meant to leave is still there. The route watches the flag instead.
      */
-    fun onSave(onSaved: () -> Unit) {
+    fun onSave() {
         val state = _uiState.value
-        if (state.title.isBlank()) {
-            _uiState.update { it.copy(titleError = true) }
-            return
+        if (state.isSaving) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true, saveError = null, titleError = false) }
+
+            saveTask(
+                id = state.taskId,
+                draft = TaskDraft(
+                    title = state.title,
+                    notes = state.notes,
+                    priority = state.priority,
+                ),
+            ).fold(
+                onSuccess = { _uiState.update { it.copy(isSaving = false, isSaved = true) } },
+                onFailure = ::onSaveFailed,
+            )
         }
-        // TODO(data layer): call saveTask(state.taskId, draft) and only report success on Result.success.
-        onSaved()
     }
 
     fun onRetry() {
-        // TODO(data layer): re-run the initial load for the edit case.
+        val taskId = _uiState.value.taskId ?: return
+        load(taskId)
+    }
+
+    /** Called once the snackbar has been shown, so a configuration change does not show it again. */
+    fun onSaveErrorShown() {
+        _uiState.update { it.copy(saveError = null) }
+    }
+
+    private fun load(taskId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+
+            getTask(taskId).fold(
+                onSuccess = { task ->
+                    _uiState.update {
+                        it.copy(
+                            title = task.title,
+                            notes = task.notes.orEmpty(),
+                            priority = task.priority,
+                            isLoading = false,
+                        )
+                    }
+                },
+                onFailure = { throwable ->
+                    _uiState.update { it.copy(isLoading = false, error = throwable.asDataError()) }
+                },
+            )
+        }
+    }
+
+    /**
+     * A blank title is the user's to fix in the field they are already looking at; anything else is a
+     * failure of the source, and the form survives it untouched.
+     */
+    private fun onSaveFailed(throwable: Throwable) {
+        _uiState.update {
+            if (throwable is ValidationException.BlankTitle) {
+                it.copy(isSaving = false, titleError = true)
+            } else {
+                it.copy(isSaving = false, saveError = throwable.asDataError())
+            }
+        }
     }
 }
