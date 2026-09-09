@@ -1,0 +1,34 @@
+<journey name="DD-06 The relative wording stops seven days into the past as well">
+  <description>
+    DD-04 walks the boundary forwards, at seven and eight days out. relativeDateOf has the same
+    boundary behind it - the range check is written twice, once as 2..MAX_RELATIVE_DAYS and once as
+    -MAX_RELATIVE_DAYS..-2 - and an off-by-one in the negative half would leave "Due 8 days ago"
+    where a calendar date belongs, or a bare date where the count still reads better.
+
+    The past branch also carries the whole overdue story: the fourth seed row is the only overdue task
+    the suite ever renders, and it is always exactly one day late. Anything further back has never
+    been on screen.
+
+    A picker that refused a past date would fail at the third action, which is itself worth knowing:
+    a due date in the past is a normal thing to record for a task that slipped.
+
+    "Due date" is the section label and starts with "Due " as well - exclude it when matching, the way
+    DD-04 does.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the "Book dentist" row</action>
+    <action>Tap "Set date"</action>
+    <action>Select the date exactly seven days before today and tap "OK"</action>
+    <action>Verify that the due date reads "Due 7 days ago"</action>
+    <action>Tap "Change date"</action>
+    <action>Select the date exactly eight days before today and tap "OK"</action>
+    <action>Verify that the due date no longer counts days and instead shows a calendar date, beginning with "Due " and excluding the "Due date" section label</action>
+    <action>Tap the "Save" button</action>
+    <action>Verify that the app returns to the "Tasks" screen</action>
+    <action>Verify that the "Book dentist" row shows that same calendar date</action>
+  </actions>
+</journey>

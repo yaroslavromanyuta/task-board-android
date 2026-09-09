@@ -1,0 +1,33 @@
+<journey name="TL-17 An undo offer survives a trip to the editor and back">
+  <description>
+    The list screen leaves the composition when the editor opens, which cancels the LaunchedEffect
+    holding the snackbar - so neither of its branches runs, onMessageShown is never called, and the
+    TaskDeleted message stays in the ViewModel state. Coming back re-runs the effect and re-offers the
+    undo.
+
+    That is what this journey pins: the offer is not silently lost by navigating away, and what comes
+    back is still actionable rather than a dead message. The list ViewModel is scoped to its back
+    stack entry, so it and the captured task survive the round trip.
+
+    The neighbouring rule - a shown message is cleared so a rotation does not repeat it - is covered
+    as state by the ViewModel test. Here the message was never shown at all, which is the case that
+    rule must not swallow.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Delete task" on the "Book dentist" row</action>
+    <action>Verify that a message reading "Task deleted" is on screen</action>
+    <action>Tap the element with the content description "Add task" while that message is still on screen</action>
+    <action>Verify that the title "New task" is on screen</action>
+    <action>Verify that no "Task deleted" message and no "Undo" action are on screen</action>
+    <action>Tap the element with the content description "Back"</action>
+    <action>Verify that the app returns to the "Tasks" screen</action>
+    <action>Verify that a message reading "Task deleted" is on screen again, with an "Undo" action</action>
+    <action>Tap the "Undo" action on that message</action>
+    <action>Verify that "Book dentist" is on screen again</action>
+    <action>Verify that "Book dentist" is the last row in the list</action>
+  </actions>
+</journey>

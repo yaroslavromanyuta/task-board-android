@@ -1,0 +1,26 @@
+<journey name="ED-08 A double-tapped Save creates one task, not two">
+  <description>
+    TaskEditorViewModel.onSave returns early when isSaving is already true, and canSave goes false
+    for the duration of the call. Both guards exist for one reason - the save is asynchronous and the
+    button stays on screen while it is in flight - and neither is observable to a unit test that
+    advances a test dispatcher past the call before the second tap can happen.
+
+    The latency knob is what makes the window real: at the default 300-800 ms the second tap lands
+    after the screen has already left. At 3000 ms it lands squarely in the middle of the save.
+
+    A duplicate row here is data the user did not ask for and cannot tell apart from what they did.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0 --es qa_latency_ms 3000
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Type "Buy milk" into the "Title" field</action>
+    <action>Tap the "Save" button</action>
+    <action>Immediately tap the "Save" button a second time, before the screen returns to the list</action>
+    <action>Verify that the app returns to the "Tasks" screen</action>
+    <action>Verify that exactly one row reading "Buy milk" is on screen</action>
+    <action>Verify that exactly five elements with the content description "Delete task" are on screen</action>
+  </actions>
+</journey>

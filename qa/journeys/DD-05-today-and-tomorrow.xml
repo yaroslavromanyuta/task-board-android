@@ -1,0 +1,34 @@
+<journey name="DD-05 Today and tomorrow are worded, not counted">
+  <description>
+    The two nearest cases in RelativeDate, and the two the seed data cannot reach: the four seed rows
+    carry "in 3 days", "yesterday" and nothing at all, so "Due today" and "Due tomorrow" are strings
+    the suite has never seen rendered. Both are reachable only through the picker.
+
+    They are worth a device journey rather than trusting the unit test that pins the arithmetic,
+    because the wording is a separate resource lookup from the number - Today and Tomorrow are
+    stringResource, InDays is a plural - and a wrong branch here reads as "Due in 0 days" or "Due in
+    1 day", which is the kind of thing only a person notices.
+
+    The date the picker returns is midnight in the picker's own reckoning; relativeDateOf converts
+    through the viewer's zone, so this journey needs a device whose clock and zone are correct. It
+    does not need either changed.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the "Book dentist" row</action>
+    <action>Verify that "No due date" is on screen</action>
+    <action>Tap "Set date"</action>
+    <action>Select today's date in the picker and tap "OK"</action>
+    <action>Verify that "Due today" is on screen</action>
+    <action>Tap "Change date"</action>
+    <action>Select tomorrow's date in the picker and tap "OK"</action>
+    <action>Verify that "Due tomorrow" is on screen</action>
+    <action>Verify that "Due today" is no longer on screen</action>
+    <action>Tap the "Save" button</action>
+    <action>Verify that the app returns to the "Tasks" screen</action>
+    <action>Verify that the "Book dentist" row shows "Due tomorrow"</action>
+  </actions>
+</journey>

@@ -8,6 +8,11 @@
     disabled Save remain on screen over the error. That is intentional: a user must always be able
     to leave.
 
+    Retry is tapped rather than merely observed: onRetry re-reads taskId from the state and calls
+    load() again, and the form it seeds on the second attempt is the only proof that the recovery
+    path reaches the source rather than just clearing the error. The source is mended between the
+    two attempts, which is what makes the retry succeed rather than repeat.
+
     Preconditions:
       adb shell am force-stop com.rounds.test.to_dolist
       adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
@@ -21,6 +26,13 @@
     <action>Verify that a "Retry" button is on screen</action>
     <action>Verify that no "Title" field is on screen</action>
     <action>Verify that an element with the content description "Back" is on screen</action>
+    <action>Using adb, mend the source with `am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 0.0`</action>
+    <action>Tap the "Retry" button</action>
+    <action>Verify that "No connection. Check your network and try again." is no longer on screen</action>
+    <action>Verify that "Retry" is no longer on screen</action>
+    <action>Verify that the "Title" field is now on screen and contains "Renew domain registration"</action>
+    <action>Verify that the "Notes (optional)" field contains "Expires end of month"</action>
+    <action>Verify that the "High" priority chip is selected</action>
     <action>Tap the element with the content description "Back"</action>
     <action>Verify that the app returns to the "Tasks" screen with its four rows still listed</action>
   </actions>

@@ -1,7 +1,11 @@
 # Test plan
 
-Thirty-seven journeys, 322 steps. Run instructions are in [`README.md`](README.md); this file is the
+Fifty-four journeys, 523 steps. Run instructions are in [`README.md`](README.md); this file is the
 catalogue, the traceability matrix and the list of things expected to fail.
+
+All fifty-four have now been run. Fifty-three pass; **AX-03 fails**, on a defect it found — the
+floating action button covers the last row's Delete control. The seventeen journeys added by the
+review of 2026-09-09 are marked 🆕 in the catalogue below.
 
 ## What this suite is for, and what it deliberately leaves alone
 
@@ -18,13 +22,19 @@ So these journeys target what a unit test structurally cannot reach:
 - rotation and process death against the real Android runtime;
 - accessibility as the system actually exposes it;
 - the palette, in both themes;
-- the in-memory store's cold-start boundary.
+- the in-memory store's cold-start boundary;
+- the failure half of every write — a delete, an undo and a save that do not land;
+- the window *inside* a call, which a test dispatcher closes before a second tap can reach it;
+- the back stack: a screen left during a save, and an offer left behind on another screen.
 
 Two areas are excluded on purpose. `DataError.Timeout` and `DataError.Conflict` have no scenarios:
 `BACKLOG.md:295` closes open question Q-3 by recording that nothing emits them, and a journey there
-would be testing dead taxonomy. And nothing here re-asserts a pure sorting or trimming rule that
-`TaskSortTest` or `SaveTaskUseCaseTest` already pins at the unit level — only the observable end of
-those rules appears, and only where the wiring between layers is what is in doubt.
+would be testing dead taxonomy. `DataError.NotFound` was excluded with them until the review found a
+route to it that a user can walk — an editor restored over an id the restarted source never issued —
+so it now has ED-09 and the taxonomy is two-thirds covered rather than half. And nothing here
+re-asserts a pure sorting or trimming rule that `TaskSortTest` or `SaveTaskUseCaseTest` already pins
+at the unit level — only the observable end of those rules appears, and only where the wiring between
+layers is what is in doubt.
 
 ## Catalogue
 
@@ -43,7 +53,7 @@ ST-04 is the highest-value journey in the suite. It is the one rule `TaskListVie
 exists to hold — content on screen means a failure passes over it — and the one whose breakage users
 notice immediately, because it takes their list away.
 
-### TL — the list (12)
+### TL — the list (21)
 
 | Id | Scenario | Covers |
 |---|---|---|
@@ -59,14 +69,35 @@ notice immediately, because it takes their list away.
 | TL-10 | Undo under an active search restores outside the filter | FR-10 + FR-12 |
 | TL-11 | Search matches titles only, case-insensitively | FR-10 |
 | TL-12 | Sorting reorders the list and composes with search | FR-11 |
+| TL-13 | An undo that fails leaves the task gone with no second offer | FR-12 🆕 ⚠ |
+| TL-14 | A delete that fails keeps the row and offers no undo | FR-04 🆕 |
+| TL-15 | A restore that fails halfway brings the task back unfinished | FR-12 🆕 ⚠ |
+| TL-16 | A failure arriving over a pending undo takes the offer away | FR-12 🆕 ⚠ |
+| TL-17 | An undo offer survives a trip to the editor and back | FR-12 🆕 |
+| TL-18 | Deleting the only match shows the no-matches copy, not the empty state | FR-08 + FR-10 🆕 |
+| TL-19 | A task created under an active query lands where the user cannot see it | FR-02 + FR-10 🆕 ⚠ |
+| TL-20 | A double-tapped row opens one editor, not two | FR-05 🆕 |
+| TL-21 | Two taps on a checkbox during one write both mean complete | FR-03 🆕 ⚠ |
 
 TL-06 and TL-07 are the two halves of the undo guarantee that cost the most to get right. `TaskApi`
 has no restore operation, so `RestoreTaskUseCase` re-creates the task — which means a new id, a new
 position at the bottom of the list, and a second `setCompleted` call for a task that was completed.
 TL-06 pins the position change as intended behaviour rather than a bug; TL-07 catches the dropped
-second call, the failure mode where a completed task quietly returns unfinished.
+second call, the failure mode where a completed task quietly returns unfinished. TL-15 is the third
+side of the same triangle: the two calls are not atomic, so a restore can half-succeed and put a
+completed task back unfinished with nothing but a network snackbar to explain it.
 
-### ED — the editor (7)
+TL-13, TL-14 and TL-16 close the suite's largest gap. Every write in the app had a happy path on a
+device and no failing one except the toggle in ST-04 — yet ~15% is the shipped failure rate, so the
+failing path is what one user in seven meets. Each of the three is a different consequence: a delete
+that does not happen, an undo that does not happen, and an unrelated failure eating an undo offer
+that would have.
+
+TL-20 and TL-21 both live inside a call. They exist because a test dispatcher closes that window
+before a second tap can land in it: on a device, two taps in one frame are ordinary, and the second
+one either pushes a second editor or resends the same write.
+
+### ED — the editor (10)
 
 | Id | Scenario | Covers |
 |---|---|---|
@@ -77,13 +108,23 @@ second call, the failure mode where a completed task quietly returns unfinished.
 | ED-05 | Leaving the editor discards an unsaved edit without asking | FR-05 ⚠ |
 | ED-06 | A failed save keeps the form and does not navigate | FR-02 |
 | ED-07 | A failed edit-mode load replaces the form and retries | FR-09 |
+| ED-08 | A double-tapped Save creates one task, not two | FR-02 🆕 |
+| ED-09 | Saving a task the source has forgotten reports NotFound over the form | FR-09, §8 taxonomy 🆕 |
+| ED-10 | Leaving during an in-flight save drops it silently | FR-02 🆕 ⚠ |
 
 ED-06 and ED-07 are the pair that proves the editor's three failure fields are actually three. A
 failed *save* must leave the form untouched under a snackbar; a failed *load* has no form worth
 protecting, so it becomes the screen. Collapsing the two is the obvious refactor and the one that
-loses the user's typing.
+loses the user's typing. ED-07 now taps Retry as well as observing it: the journey was named for a
+retry it never performed, so the editor's recovery path had no on-device coverage at all.
 
-### DD — due dates (4)
+ED-08 and ED-10 are the two ends of an asynchronous save. One is guarded — `onSave` returns early
+while `isSaving` — and the other is not: popping the editor clears the ViewModel, cancels the scope
+and takes the in-flight `createTask` with it, so the task is never created and the user is never
+told. ED-09 is what makes `DataError.NotFound` reachable without inventing a scenario: the ids the
+source hands out restart with the process, and a restored editor can outlive the id it holds.
+
+### DD — due dates (6)
 
 | Id | Scenario | Covers |
 |---|---|---|
@@ -91,8 +132,14 @@ loses the user's typing.
 | DD-02 | The editor can set, change and clear a due date | FR-13 |
 | DD-03 | Cancelling the date picker leaves the date untouched | FR-13 |
 | DD-04 | The relative wording stops at seven days | FR-13 |
+| DD-05 | Today and tomorrow are worded, not counted | FR-13 🆕 |
+| DD-06 | The relative wording stops seven days into the past as well | FR-13 🆕 |
 
-### LC — lifecycle (5)
+The seed rows only ever render "in 3 days", "yesterday" and no date at all, so "Due today" and "Due
+tomorrow" — two separate string lookups, not the plural the counted cases use — had never been on
+screen. DD-06 walks the negative half of a boundary that is written twice in `relativeDateOf`, once
+per direction.
+### LC — lifecycle (6)
 
 | Id | Scenario | Covers |
 |---|---|---|
@@ -101,20 +148,33 @@ loses the user's typing.
 | LC-03 | The date picker survives a rotation | NFR-06 🔧 |
 | LC-04 | A half-typed form survives process death | NFR-07 |
 | LC-05 | A cold start returns to the four seed rows | D-2 |
+| LC-06 | An edited form survives process death and is not reloaded over | NFR-07 🆕 |
 
 LC-05 records a deviation rather than a defect, and it is also the suite's own foundation: every
 other journey depends on `force-stop` restoring the seed rows exactly.
 
-### AX / TH — accessibility and theme (3)
+LC-04 kills the process over a create form, where there is nothing older to lose. LC-06 is the half
+that has something to lose: an edit form has a task behind it, and `if (!hasSavedForm) taskId?.let(::load)`
+is the one line standing between the user's typing and the source's older copy of it.
+
+### AX / TH — accessibility and theme (5)
 
 | Id | Scenario | Covers |
 |---|---|---|
 | AX-01 | Every icon-only control carries a description | NFR-09 |
 | AX-02 | The row checkbox announces the action its tap performs | NFR-09 🔧 |
 | TH-01 | Dark mode keeps the priority colours apart | FR-14, TB-705, TB-706 |
+| AX-03 | The list and the form stay usable at 200% font scale | NFR-09, FR-01 🆕 ❌ |
+| TH-02 | Switching to dark mode keeps a half-filled form | NFR-06, FR-14 🆕 |
 
-Both AX journeys cover ground that `BACKLOG.md` task TB-308 verified by reading the code. This is
+Both AX-01 and AX-02 cover ground that `BACKLOG.md` task TB-308 verified by reading the code. This is
 the first time either is checked against what the system actually exposes.
+
+AX-03 is the first journey that scrolls anything. FR-01 asks for a scrollable list and the four seed
+rows never fill a screen — not even at 200%, which the run measured — so the journey adds two rows of
+its own to overflow the viewport. That is what turned up issue #12: the list scrolls, and the row it
+scrolls to has a Delete control the FAB is sitting on. TH-02 covers the configuration change users
+actually perform — NFR-06 says configuration change, and LC-01 to LC-03 only ever rotate.
 
 ## Suites
 
@@ -125,9 +185,19 @@ touches both screens, both failure channels, navigation and a configuration chan
 ST-01  ST-04  TL-01  TL-05  TL-06  ED-01  ED-04  LC-01
 ```
 
-**Full — all 37.** Force-stop between each one. All 37 pass on the current build, confirmed by a second full run after the fixes.
+**Full — all 54.** Force-stop between each one. 53 pass on the current build; AX-03 fails on issue #12.
 
-⚠ marks a journey that asserts behaviour someone still has to rule on; 🔧 marks one that was failing and is now a regression guard over a fix.
+**Write-failure set — 6 journeys.** The failing half of every write, which the suite had almost none
+of before the review. Worth running as a block, because they share the broadcast recipe and each one
+needs the source broken at a different moment.
+
+```
+TL-13  TL-14  TL-15  TL-16  ED-09  ED-10
+```
+
+⚠ marks a journey that asserts behaviour someone still has to rule on; 🔧 marks one that was failing
+and is now a regression guard over a fix; 🆕 marks one added on 2026-09-09; ❌ marks one failing on the
+current build.
 
 ## Run log
 
@@ -215,10 +285,70 @@ re-run is the only thing that would have said so.
 
 Everything else passed unchanged.
 
+### 2026-09-09 — suite review, seventeen journeys added
+
+No device time. A read of the 37 journeys against the source and `REQUIREMENTS.md` looking for corner
+cases nothing asserts. Six gaps, in rough order of what they would cost a user:
+
+1. **The failing half of a write was almost uncovered.** ST-04 breaks a toggle; nothing broke a
+   delete, an undo or a create. At the shipped 15% these are not edge cases — they are one user in
+   seven. Added TL-13, TL-14, TL-15, TL-16, ED-09, ED-10.
+2. **Nothing acted inside a call.** Every journey either pinned the latency to read a screen or let
+   the call finish. The second tap, the Back press mid-save, the interleaving that a test dispatcher
+   cannot produce — none of it was reachable. Added ED-08, ED-10, TL-20, TL-21.
+3. **ED-07 never tapped Retry.** The journey is named for a retry, the traceability matrix counts it
+   under FR-09 recovery, and the actions stop at Back. Extended in place rather than added, since the
+   id already claimed the coverage.
+4. **`hasNoMatches` and the query had one path in and none out.** Nothing deleted the last matching
+   row, and nothing created a task the live query hides — the second of which looks exactly like a
+   failed save. Added TL-18, TL-19.
+5. **Two relative-date branches had never rendered, and one snackbar had never crossed a screen.**
+   "Due today", "Due tomorrow" and the whole negative half of the boundary; and an undo offer left
+   behind by navigating. Added DD-05, DD-06, TL-17.
+6. **Two configuration facts went untested.** FR-01 asks for a scrollable list that four rows never
+   fill, and NFR-06 says configuration change while every journey only rotated. Added AX-03, TH-02.
+
+Six of the new journeys assert behaviour that is arguably wrong and are on the watchlist below. The
+other eleven were expected to pass. Ten did.
+
+### 2026-09-09 — the added journeys, run
+
+Same device as the 2026-09-08 runs: Samsung SM-G973F (`RF8M32EDAQD`), Android 12 / API 31, animations
+off. Build: `:app:installDebug` at commit `68c0479`. Results in
+[`results/2026-09-09-new-journeys-run.json`](results/2026-09-09-new-journeys-run.json).
+
+**17 of 18 passed. 208 actions, 207 passed, 1 failed, none skipped.** The eighteenth is ED-07, whose
+retry path was added rather than written fresh.
+
+The other 36 journeys were not re-run. Nothing in this change touches app code, and they passed on
+this build on 2026-09-08.
+
+| Failed | Why |
+|---|---|
+| **AX-03** ❌ #12 | **New defect.** At the last action: the bottom row's Delete control is not in the layout dump at all. The FAB is drawn over that corner and the list has no bottom content padding, so scrolling cannot clear it. Reproduced at font scale 1.0 with ten rows, so it is not a 200% artefact |
+
+**Six watchlist predictions were confirmed on the device**, which is what their journeys passing
+means: TL-13, TL-15, TL-16, TL-19, TL-21 and ED-10. Each is now a filed defect rather than a
+prediction — issues #13 to #18.
+
+Three things about running these are worth keeping:
+
+- **The undo window is ten seconds and a layout dump costs three.** TL-17 lost its snackbar to two
+  dumps taken between returning to the list and tapping Undo; the tap then landed on the empty list
+  and the task stayed deleted. Read once, then act.
+- **TL-15's window is narrower still.** The broadcast has to land after `createTask` has rolled its
+  dice and before `setCompleted` rolls its own. Two attempts missed it in both directions — the
+  create failed, then both calls succeeded — before it reproduced. Issue the tap and the broadcast in
+  one `adb shell` line with a device-side `sleep` between them.
+- **A selected chip's `checked` is on the wrapping `View`.** `qa/README.md` says a `FilterChip`
+  reports `checked="true"`; on this device the `CheckBox` child reads `false` and its parent `View`
+  reads `true`. Match the parent.
+
 ## Known-defect watchlist
 
-Six entries. Five were written in advance as journeys asserting behaviour that may well be wrong;
-the sixth, TL-08, was found by running them.
+Thirteen entries. Five were written in advance as journeys asserting behaviour that may well be
+wrong; TL-08 and AX-03 were found by running them; the other six were written by the 2026-09-09
+review and confirmed on the device the same day.
 
 **Three are now fixed** — TL-08 (#7), LC-03 (#8) and AX-02 (#9) — and their journeys have been
 rewritten as regression guards rather than defect probes. They are kept in the table because the
@@ -226,6 +356,13 @@ reasoning is worth not losing.
 
 **Three remain open.** TL-09, ED-05 and ED-02 assert the current behaviour, so they pass; passing
 *is* the finding, and each names a trade-off that is product's call rather than QA's.
+
+**Six were confirmed on 2026-09-09** and filed as issues #13 to #18. TL-13, TL-15, TL-16, TL-19,
+TL-21 and ED-10 assert the current behaviour, so each one passing *is* its finding.
+
+**One is a plain failure.** AX-03 (#12) is the only entry here whose journey fails: it asserts
+something reasonable — that the bottom row's Delete control is reachable — and the app does not do
+it.
 
 | Id | What the journey found | Why it matters | The fix |
 |---|---|---|---|
@@ -235,6 +372,13 @@ reasoning is worth not losing.
 | **LC-03** ✅ #8 | *Fixed.* The picker's visibility was `remember`, not `rememberSaveable`, so a rotation closed it | NFR-06 asks for state intact across a configuration change. Whether an open dialog counts is the open question | One word: `rememberSaveable` |
 | **AX-02** ✅ #9 | *Fixed.* The row checkbox was described as "Mark complete" whatever its state | TalkBack tells a user they can complete a task that is already complete. The checked state is exposed correctly, so the label contradicts it | A second string, chosen on `isCompleted` |
 | **ED-02** ⚠ open | `canSave` is already false for a whitespace-only title, so `SaveTaskUseCase` is never reached and "A title is required." cannot appear | Not a functional break — the rule holds. But a string, a `supportingText` branch and a tested ViewModel path are unreachable dead UI | Either drop the inline error, or let Save through and rely on the use case |
+| **TL-13** ⚠ #13 | `onUndoDelete` clears `message` before it calls `restoreTask`, so a restore that fails leaves a network snackbar and no offer | Undo is the only route back and it is spent whether or not it worked. At 15% this loses a task outright about one undo in seven | Keep the message until the restore succeeds, or re-post the offer on failure |
+| **TL-15** ⚠ #14 | `RestoreTaskUseCase` is `createTask` then `setCompleted`, and nothing makes the pair atomic. The second failing puts a completed task back unfinished | The row is on screen and looks restored. The only signal that it is not is a network snackbar that says nothing about completion | Report a partial restore distinctly, or re-apply the flag on the next refresh |
+| **TL-16** ⚠ #15 | Any `reportFailure` overwrites a pending `TaskDeleted` in the same single `message` slot — a background toggle is enough | TL-09 needs the user to delete twice. This needs them to do nothing at all: one lost dice roll takes the undo away | The same queue TL-09 asks for, or a message type that a failure cannot displace |
+| **TL-19** ⚠ #16 | A save returns to a list still filtered by the query, so a new task whose title does not match is created and invisible | The editor closing is the app's only "saved" signal, and the list then shows no such task — the same picture a failed save paints | Clear the query on return, or say the new task is hidden by the filter |
+| **TL-21** ⚠ #17 | The checkbox renders the cache, which does not move until the write lands, so a second tap during the first write sends "complete" twice | Two taps read as complete-then-undo and leave the task complete. Nothing is reported, and the second tap is simply absorbed | Disable the control while its write is in flight, or track the pending value |
+| **ED-10** ⚠ #18 | Popping the editor clears the ViewModel, cancels `viewModelScope` and with it the in-flight `createTask` | The user tapped Save and left, which reads as saved. Unlike a delete there is no snackbar behind it and no trace afterwards | Complete the save outside the ViewModel's scope, or block the exit while one is in flight |
+| **AX-03** ❌ #12 | The `LazyColumn` has no bottom `contentPadding`, so the last row ends flush with the viewport and the FAB is drawn over its right-hand end. The Delete control is not merely covered — it is absent from the layout dump | The only way to delete the bottom task is to add another one, sort it away or search for it. Reproduced at the default font scale with ten rows, so any list long enough to scroll has one unreachable row | `contentPadding = PaddingValues(bottom = 88.dp)` on the list |
 
 TL-08 was not predicted at all. It failed on an assumption its own journey made about how a
 snackbar behaves — and the assumption turned out to be right about snackbars and wrong about this
@@ -243,29 +387,31 @@ obvious assertion down even when it looks too obvious to fail.
 
 ## Traceability
 
-Every functional requirement now has at least one on-device scenario.
+Every functional requirement now has at least one on-device scenario, and every write has both a
+happy and a failing one.
 
 | Requirement | Journeys |
 |---|---|
-| FR-01 scrollable list, long titles | TL-01, TL-02 |
-| FR-02 add a task | ED-01, ED-02, ED-03, ED-06 |
-| FR-03 toggle complete | TL-03, TL-04 |
-| FR-04 delete | TL-05, ST-05 |
-| FR-05 edit round trip | ED-04, ED-05 |
+| FR-01 scrollable list, long titles | TL-01, TL-02, AX-03 (the only one that scrolls) |
+| FR-02 add a task | ED-01, ED-02, ED-03, ED-06, ED-08, ED-10, TL-19 |
+| FR-03 toggle complete | TL-03, TL-04, TL-21 |
+| FR-04 delete | TL-05, ST-05, TL-14 |
+| FR-05 edit round trip | ED-04, ED-05, TL-20 |
 | FR-06 everything through the mock source | implicit in all 37 — every assertion is downstream of a `TaskApi` call |
 | FR-07 loading state | ST-01 |
-| FR-08 empty state | ST-05 |
-| FR-09 error state and recovery | ST-02, ST-03, ST-04, ED-07 |
-| FR-10 search | ST-05, ST-06, TL-10, TL-11 |
+| FR-08 empty state | ST-05, TL-18 |
+| FR-09 error state and recovery | ST-02, ST-03, ST-04, ED-07, ED-09 |
+| FR-10 search | ST-05, ST-06, TL-10, TL-11, TL-18, TL-19 |
 | FR-11 sort | TL-12 |
-| FR-12 undo delete | TL-05, TL-06, TL-07, TL-08, TL-09, TL-10 |
-| FR-13 due dates | DD-01, DD-02, DD-03, DD-04 |
-| FR-14 light and dark themes | TH-01 |
+| FR-12 undo delete | TL-05, TL-06, TL-07, TL-08, TL-09, TL-10, TL-13, TL-15, TL-16, TL-17 |
+| FR-13 due dates | DD-01, DD-02, DD-03, DD-04, DD-05, DD-06 |
+| FR-14 light and dark themes | TH-01, TH-02 |
 | NFR-02 300–800 ms reads | ST-01 |
-| NFR-06 configuration change | LC-01, LC-02, LC-03 |
-| NFR-07 process recreation | LC-04 |
-| NFR-09 accessibility | AX-01, AX-02, TL-01 (priority as text) |
-| D-2 in-memory store | LC-05 |
+| NFR-06 configuration change | LC-01, LC-02, LC-03, TH-02 (night mode, not rotation) |
+| NFR-07 process recreation | LC-04, LC-06, ED-09 |
+| NFR-09 accessibility | AX-01, AX-02, AX-03, TL-01 (priority as text) |
+| D-2 in-memory store | LC-05, ED-09 (ids restart with the process) |
+| §8 error taxonomy | `Network` throughout, `NotFound` in ED-09; `Timeout` and `Conflict` are unreachable by design |
 
 Not covered here, and correctly so: NFR-01, NFR-04, NFR-05, NFR-08 and NFR-10 through NFR-13 are
 properties of the source, the build or the module graph. They are verified by the compiler, by
@@ -284,5 +430,9 @@ observe them, and a journey that claimed to would be lying.
   would turn those into assertions — §7 item 5.
 - **Scale.** Nothing here goes past four rows. Paging is the seam (§7 item 4), and a fifty-row
   journey is the cheapest way to find out whether it is needed yet.
-- **Font scale and TalkBack.** AX-01 checks that descriptions exist; it does not check that a
-  200%-scaled row stays usable or that linear navigation reaches everything in a sensible order.
+- **TalkBack itself.** AX-01 checks that descriptions exist and AX-03 that a 200%-scaled screen stays
+  operable; neither checks that linear navigation reaches everything in a sensible order, or that a
+  row announces as one thing rather than four.
+- **A live locale or time zone change.** DD-05 and DD-06 read relative dates in the device's own
+  zone. Crossing midnight, or moving the device between zones with a due date on screen, is the one
+  due-date rule still verified only by `RelativeDateTest`.

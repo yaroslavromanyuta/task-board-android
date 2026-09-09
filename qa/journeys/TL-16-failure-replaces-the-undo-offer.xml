@@ -1,0 +1,29 @@
+<journey name="TL-16 A failure arriving over a pending undo takes the offer away">
+  <description>
+    KNOWN-DEFECT WATCHLIST. Asserts the current behaviour; whether it is the right behaviour is a
+    product call. See qa/TEST-PLAN.md.
+
+    TL-09 shows a second delete overwriting the first undo offer. This is the same single-slot message
+    field reached down the other code path: post() writes TaskDeleted and reportFailure writes Failure
+    into the same nullable field, so any unrelated failure - a toggle, a refresh - that arrives while
+    an undo offer is up silently consumes it.
+
+    It matters more than TL-09 because the user did nothing to cause it. One lost dice roll in a
+    background write is enough to take away the only route back from a delete they were still
+    deciding about.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Delete task" on the "Renew domain registration" row</action>
+    <action>Verify that a message reading "Task deleted" is on screen</action>
+    <action>Using adb, break the source with `am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 1.0`</action>
+    <action>Tap the checkbox with the content description "Mark complete" on the "Reply to design feedback" row</action>
+    <action>Verify that "No connection. Check your network and try again." is on screen</action>
+    <action>Verify that no message reading "Task deleted" and no "Undo" action are on screen</action>
+    <action>Verify that "Renew domain registration" is not on screen and is offered no further way back</action>
+    <action>Verify that the "Reply to design feedback" row still has an unchecked checkbox</action>
+  </actions>
+</journey>

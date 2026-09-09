@@ -1,0 +1,38 @@
+<journey name="TL-18 Deleting the only match shows the no-matches copy, not the empty state">
+  <description>
+    The boundary between the two sentences REQUIREMENTS.md section 9 keeps apart. isEmpty is
+    tasks.isEmpty(); hasNoMatches is tasks.isNotEmpty() with nothing left after the filter. Deleting
+    the last row a query matches lands exactly on the second one - three tasks still exist, none of
+    them visible - and the wrong branch here would tell the user their board is empty and offer them
+    a plus button instead of a query to clear.
+
+    ST-06 reaches hasNoMatches by typing a query that matches nothing. This reaches it by taking the
+    match away, which is the path where tasks and visibleTasks disagree because of a write rather than
+    because of the field.
+
+    The undo at the end is the return trip: the query is still "dentist", the restored task still
+    matches it, and the row has to reappear inside the filter that was live the whole time.
+
+    The soft keyboard sits over the snackbar after typing, so dismiss it before touching Undo - see
+    qa/README.md, "Two things that will waste a run if you miss them".
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the "Search by title" field</action>
+    <action>Type "dentist" into the "Search by title" field</action>
+    <action>Verify that "Book dentist" is on screen</action>
+    <action>Verify that "Renew domain registration" is not on screen</action>
+    <action>Using adb, dismiss the soft keyboard if `dumpsys input_method | grep mInputShown` reports it is up, with `input keyevent KEYCODE_BACK`</action>
+    <action>Tap the element with the content description "Delete task" on the "Book dentist" row</action>
+    <action>Verify that the text “No tasks match “dentist”.” is on screen, with typographic quotation marks around dentist</action>
+    <action>Verify that "No tasks yet. Tap + to add one." is not on screen</action>
+    <action>Verify that the "Search by title" field is still on screen and still contains "dentist"</action>
+    <action>Tap the "Undo" action on the "Task deleted" message</action>
+    <action>Verify that "Book dentist" is on screen again</action>
+    <action>Verify that the no-matches message is no longer on screen</action>
+    <action>Verify that the "Search by title" field still contains "dentist"</action>
+  </actions>
+</journey>

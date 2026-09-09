@@ -1,0 +1,32 @@
+<journey name="ED-10 Leaving during an in-flight save drops it silently">
+  <description>
+    KNOWN-DEFECT WATCHLIST. Asserts the current behaviour; whether it is the right behaviour is a
+    product call. See qa/TEST-PLAN.md.
+
+    onSave runs in viewModelScope. Popping the editor destroys the back stack entry, which clears the
+    ViewModel, which cancels the scope and with it the createTask call still inside FakeTaskApi's
+    delay. The task is never created, the user is never told, and there is no snackbar behind this
+    one the way there is behind a delete.
+
+    Neither half is visible below the device: a unit test cannot pop a back stack entry, and the
+    ViewModel test that covers a failed save covers a save that returned, not one that was cancelled.
+
+    The latency knob makes the window wide enough to tap Back inside it. The wait afterwards is
+    what separates "cancelled" from "still on its way".
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0 --es qa_latency_ms 5000
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Type "Walked out on" into the "Title" field</action>
+    <action>Tap the "Save" button</action>
+    <action>Immediately tap the element with the content description "Back", before the save completes</action>
+    <action>Verify that the app returns to the "Tasks" screen</action>
+    <action>Wait ten seconds, which is twice the pinned call latency</action>
+    <action>Verify that "Walked out on" is not on screen</action>
+    <action>Verify that no error message and no "Task deleted" message are on screen</action>
+    <action>Verify that exactly four elements with the content description "Delete task" are on screen</action>
+  </actions>
+</journey>
