@@ -17,4 +17,5 @@
 
     <string name="task_list_deleted">Task deleted</string>
     <string name="task_list_action_undo">Undo</string>
+    <string name="task_list_restored_incomplete">Task restored, but it came back unfinished.</string>
 </resources>

@@ -1,19 +1,17 @@
-<journey name="TL-19 A task created under an active query lands where the user cannot see it">
+<journey name="TL-19 A task created under an active query is brought into view">
   <description>
-    KNOWN-DEFECT WATCHLIST. Asserts the current behaviour; whether it is the right behaviour is a
-    product call. See qa/TEST-PLAN.md.
+    REGRESSION GUARD. This journey used to assert the defect: the query lived in the list state and
+    nothing cleared it on the way back from a save, so a new task whose title did not match the live
+    filter was created, cached, and invisible. The user saw the editor close - the app's only signal
+    that a save worked - and then a list that said "No tasks match ...", which is the same picture a
+    failed save paints. Filed as issue #16 and now fixed: the editor reports a successful save back to
+    the list, which clears the query so the task the user just typed is on screen.
 
-    The query lives in the list state and nothing clears it on the way back from a save, so a new task
-    whose title does not match the live filter is created, cached, and invisible. The user saw the
-    editor close, which is the app's only signal that a save worked, and then saw a list that does not
-    contain what they just typed - the same picture a failed save would paint, except that this one
-    succeeded.
+    A search field is the most likely place to arrive from: typing a title, finding it is not there,
+    and tapping plus is a normal way to add a task.
 
-    The route back exists, and this journey ends by taking it: Clear search brings the task into view.
-    The finding is that nothing points the user at it.
-
-    A search field is also the most likely place to arrive from: typing a title, finding it is not
-    there, and tapping plus is a normal way to add a task.
+    The result is consumed once, so a query typed after the save is left alone. That is asserted at
+    the end rather than left to the unit test, because the wiring runs through the back stack.
 
     Preconditions:
       adb shell am force-stop com.rounds.test.to_dolist
@@ -27,11 +25,11 @@
     <action>Type "Bought milk" into the "Title" field</action>
     <action>Tap the "Save" button</action>
     <action>Verify that the app returns to the "Tasks" screen</action>
-    <action>Verify that "Bought milk" is not on screen</action>
-    <action>Verify that the text “No tasks match “invoice”.” is on screen</action>
-    <action>Verify that the "Search by title" field still contains "invoice"</action>
-    <action>Tap the element with the content description "Clear search"</action>
+    <action>Verify that the "Search by title" field is empty</action>
     <action>Verify that "Bought milk" is on screen</action>
     <action>Verify that "Bought milk" is the last row in the list</action>
+    <action>Verify that all four seed rows are on screen as well</action>
+    <action>Type "invoice" into the "Search by title" field again</action>
+    <action>Verify that the text “No tasks match “invoice”.” is on screen, so the save result was consumed and does not clear a later query</action>
   </actions>
 </journey>

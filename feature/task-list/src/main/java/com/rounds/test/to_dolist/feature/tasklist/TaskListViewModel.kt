@@ -7,6 +7,7 @@ import com.rounds.test.to_dolist.tasks.model.TaskSort
 import com.rounds.test.to_dolist.tasks.usecase.DeleteTaskUseCase
 import com.rounds.test.to_dolist.tasks.usecase.ObserveTasksUseCase
 import com.rounds.test.to_dolist.tasks.usecase.RefreshTasksUseCase
+import com.rounds.test.to_dolist.tasks.usecase.RestoreOutcome
 import com.rounds.test.to_dolist.tasks.usecase.RestoreTaskUseCase
 import com.rounds.test.to_dolist.tasks.usecase.ToggleTaskCompletedUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,6 +27,10 @@ import javax.inject.Inject
  * Failures are routed by one rule, which is REQUIREMENTS.md §9's boundary case stated directly: if
  * there is content on screen the failure passes over it as a [TaskListMessage], and if there is not,
  * it becomes the screen. A flaky moment must not cost the user the list they were reading.
+ *
+ * Messages queue rather than overwrite. A [TaskListMessage.TaskDeleted] is the only copy of a deleted
+ * task, so the rule is that nothing may displace one that has not been acted on — not an unrelated
+ * failure, and not the failure of the undo itself.
  *
  * Search and sort are derived in [TaskListUiState] from the cached list, never by re-querying the
  * source: they are a way of looking at what is already here, not a different request.
@@ -62,9 +67,36 @@ class TaskListViewModel @Inject constructor(
         _uiState.update { it.copy(sort = sort) }
     }
 
+    /**
+     * A save landed while this screen was in the back stack. The query is cleared, because the editor
+     * closing is the app's only "saved" signal and a new task whose title does not match the live
+     * filter would otherwise arrive into a screen reading "No tasks match ..." — the same picture a
+     * failed save paints.
+     *
+     * The result itself is read from the back stack entry by `taskListSection` and handed here. It
+     * cannot be read from an injected `SavedStateHandle`: Hilt builds the ViewModel its own handle,
+     * and a value written to `NavBackStackEntry.savedStateHandle` never reaches it.
+     */
+    fun onTaskSaved() {
+        _uiState.update { it.copy(query = "") }
+    }
+
+    /**
+     * The checkbox renders the cache and the cache does not move until the write returns, so a second
+     * tap inside the same call would read the same stale value and send it again — two taps meaning
+     * one write. The id is held for the duration and the row's control goes inert instead, which is
+     * the shape `TaskEditorViewModel.onSave` already uses against the same race.
+     */
     fun onToggleCompleted(id: String, completed: Boolean) {
+        if (id in _uiState.value.pendingToggles) return
+        _uiState.update { it.copy(pendingToggles = it.pendingToggles + id) }
+
         viewModelScope.launch {
-            toggleCompleted(id, completed).onFailure(::reportFailure)
+            try {
+                toggleCompleted(id, completed).onFailure(::reportFailure)
+            } finally {
+                _uiState.update { it.copy(pendingToggles = it.pendingToggles - id) }
+            }
         }
     }
 
@@ -83,17 +115,35 @@ class TaskListViewModel @Inject constructor(
         }
     }
 
+    /**
+     * The offer is consumed on the way in and re-posted if the restore fails. The message carries the
+     * only copy of the task left anywhere, so dropping it before the call succeeded is what made a
+     * failed undo lose the task outright — at the shipped 15% failure rate, about one undo in seven.
+     *
+     * A restore that re-created the task but lost its completion flag is reported as itself and not as
+     * a failure: the row is back, and what the user has to be told is which field is not.
+     */
     fun onUndoDelete(message: TaskListMessage.TaskDeleted) {
-        _uiState.update { it.copy(message = null) }
+        consume(message)
 
         viewModelScope.launch {
-            restoreTask(message.task).onFailure(::reportFailure)
+            restoreTask(message.task).fold(
+                onSuccess = { outcome ->
+                    if (outcome is RestoreOutcome.CompletionLost) {
+                        post(TaskListMessage.CompletionNotRestored(outcome.error))
+                    }
+                },
+                onFailure = { throwable ->
+                    reportFailure(throwable)
+                    post(message)
+                },
+            )
         }
     }
 
     /** Called once the message has been shown, so a configuration change does not replay it. */
     fun onMessageShown() {
-        _uiState.update { it.copy(message = null) }
+        _uiState.update { it.copy(messages = it.messages.drop(1)) }
     }
 
     private fun refresh() {
@@ -119,12 +169,24 @@ class TaskListViewModel @Inject constructor(
             if (state.tasks.isEmpty()) {
                 state.copy(error = error)
             } else {
-                state.copy(message = TaskListMessage.Failure(error))
+                state.copy(messages = state.messages.plusDistinct(TaskListMessage.Failure(error)))
             }
         }
     }
 
     private fun post(message: TaskListMessage) {
-        _uiState.update { it.copy(message = message) }
+        _uiState.update { it.copy(messages = it.messages.plusDistinct(message)) }
     }
+
+    private fun consume(message: TaskListMessage) {
+        _uiState.update { it.copy(messages = it.messages - message) }
+    }
+
+    /**
+     * A message equal to one already waiting is dropped rather than queued twice: repeating "No
+     * connection" once per lost dice roll is noise, and two identical entries in a row would also
+     * leave the snackbar's key unchanged and the second of them unshown.
+     */
+    private fun List<TaskListMessage>.plusDistinct(message: TaskListMessage): List<TaskListMessage> =
+        if (message in this) this else this + message
 }

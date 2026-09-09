@@ -1,15 +1,15 @@
-<journey name="TL-09 A second delete replaces the first undo offer">
+<journey name="TL-09 A second delete does not replace the first undo offer">
   <description>
-    KNOWN-DEFECT WATCHLIST. Expected to fail if the current behaviour is judged wrong; see
-    qa/TEST-PLAN.md.
+    REGRESSION GUARD. This journey used to assert the defect: `TaskListUiState` held one nullable
+    `message`, so a second delete overwrote the first `TaskDeleted` before the user could act on it
+    and the first task became unrecoverable. Fixed alongside issue #15 - the state now holds a queue
+    and nothing may displace an offer that has not been acted on.
 
-    TaskListUiState holds a single nullable message, so a second delete overwrites the first
-    TaskDeleted before the user can act on it. The first task is then unrecoverable - undo is the
-    only route back, it is offered once, and the offer is gone.
+    Both offers are honoured, in the order they were made. The snackbar text is the same for either,
+    so the guarantee being pinned here is that two rapid deletes cost the user nothing: the first
+    Undo restores the first deleted task, and the second offer is still waiting behind it.
 
-    This journey asserts the behaviour as it stands. Deciding whether a queue, a longer window or an
-    accepted limitation is right is a product call, not a QA one; what the suite owes is that the
-    limitation is visible rather than discovered by a user.
+    Restored tasks come back at the bottom with new ids, which is TL-06's finding and expected here.
 
     Preconditions:
       adb shell am force-stop com.rounds.test.to_dolist
@@ -19,9 +19,13 @@
     <action>Tap the element with the content description "Delete task" on the "Renew domain registration" row</action>
     <action>Verify that a message reading "Task deleted" is on screen</action>
     <action>Immediately tap the element with the content description "Delete task" on the "Reply to design feedback" row</action>
-    <action>Verify that a message reading "Task deleted" is on screen</action>
+    <action>Verify that both rows are gone and exactly two elements with the content description "Delete task" are on screen</action>
+    <action>Verify that a message reading "Task deleted" with an "Undo" action is still on screen</action>
+    <action>Tap the "Undo" action on that message</action>
+    <action>Verify that "Renew domain registration" is on screen again, as the offer made first</action>
+    <action>Verify that a second message reading "Task deleted" with an "Undo" action is now on screen</action>
     <action>Tap the "Undo" action on that message</action>
     <action>Verify that "Reply to design feedback" is on screen again</action>
-    <action>Verify that "Renew domain registration" is not on screen and is offered no further way back</action>
+    <action>Verify that exactly four elements with the content description "Delete task" are on screen</action>
   </actions>
 </journey>

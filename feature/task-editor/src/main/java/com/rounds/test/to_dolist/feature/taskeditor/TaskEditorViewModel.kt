@@ -3,6 +3,7 @@ package com.rounds.test.to_dolist.feature.taskeditor
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rounds.test.to_dolist.core.common.di.ApplicationScope
 import com.rounds.test.to_dolist.navigation.Route
 import com.rounds.test.to_dolist.tasks.error.ValidationException
 import com.rounds.test.to_dolist.tasks.error.asDataError
@@ -12,6 +13,8 @@ import com.rounds.test.to_dolist.tasks.usecase.GetTaskUseCase
 import com.rounds.test.to_dolist.tasks.usecase.SaveTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,6 +39,7 @@ import javax.inject.Inject
 @HiltViewModel
 class TaskEditorViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
+    @param:ApplicationScope private val applicationScope: CoroutineScope,
     private val getTask: GetTaskUseCase,
     private val saveTask: SaveTaskUseCase,
 ) : ViewModel() {
@@ -97,14 +101,20 @@ class TaskEditorViewModel @Inject constructor(
      * Success is reported through [TaskEditorUiState.isSaved] rather than a callback: the call is
      * asynchronous, and a lambda invoked from `viewModelScope` would not know whether the screen it
      * was meant to leave is still there. The route watches the flag instead.
+     *
+     * The write itself runs on [applicationScope] and only the *reporting* of it runs here. The user
+     * committed to the save when they tapped the button; leaving the screen afterwards pops the back
+     * stack entry, which clears this ViewModel and cancels `viewModelScope` — and with it, if the call
+     * lived there, the half-finished write. The task would never be created and nothing would say so.
+     * Awaiting from `viewModelScope` keeps the state updates lifecycle-bound while the call is not.
      */
     fun onSave() {
         val state = _uiState.value
         if (state.isSaving) return
 
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true, saveError = null, titleError = false) }
+        _uiState.update { it.copy(isSaving = true, saveError = null, titleError = false) }
 
+        val save = applicationScope.async {
             saveTask(
                 id = state.taskId,
                 draft = TaskDraft(
@@ -113,7 +123,11 @@ class TaskEditorViewModel @Inject constructor(
                     priority = state.priority,
                     dueDate = state.dueDate,
                 ),
-            ).fold(
+            )
+        }
+
+        viewModelScope.launch {
+            save.await().fold(
                 onSuccess = { _uiState.update { it.copy(isSaving = false, isSaved = true) } },
                 onFailure = ::onSaveFailed,
             )

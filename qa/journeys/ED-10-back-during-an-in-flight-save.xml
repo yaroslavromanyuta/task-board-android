@@ -1,18 +1,18 @@
-<journey name="ED-10 Leaving during an in-flight save drops it silently">
+<journey name="ED-10 A save already in flight survives leaving the editor">
   <description>
-    KNOWN-DEFECT WATCHLIST. Asserts the current behaviour; whether it is the right behaviour is a
-    product call. See qa/TEST-PLAN.md.
-
-    onSave runs in viewModelScope. Popping the editor destroys the back stack entry, which clears the
-    ViewModel, which cancels the scope and with it the createTask call still inside FakeTaskApi's
-    delay. The task is never created, the user is never told, and there is no snackbar behind this
-    one the way there is behind a delete.
+    REGRESSION GUARD. This journey used to assert the defect: `onSave` ran in `viewModelScope`, so
+    popping the editor destroyed the back stack entry, cleared the ViewModel, cancelled the scope and
+    with it the `createTask` call still inside `FakeTaskApi`'s delay. The task was never created, the
+    user was never told, and there was no snackbar behind this one the way there is behind a delete.
+    Filed as issue #18 and now fixed: the write runs on an application-scoped coroutine and only the
+    reporting of it is lifecycle-bound.
 
     Neither half is visible below the device: a unit test cannot pop a back stack entry, and the
-    ViewModel test that covers a failed save covers a save that returned, not one that was cancelled.
+    ViewModel test that covers this cancels `viewModelScope` by hand, which is a stand-in rather than
+    the thing itself.
 
-    The latency knob makes the window wide enough to tap Back inside it. The wait afterwards is
-    what separates "cancelled" from "still on its way".
+    The latency knob makes the window wide enough to tap Back inside it. The wait afterwards is what
+    separates "landed late" from "never sent".
 
     Preconditions:
       adb shell am force-stop com.rounds.test.to_dolist
@@ -24,9 +24,11 @@
     <action>Tap the "Save" button</action>
     <action>Immediately tap the element with the content description "Back", before the save completes</action>
     <action>Verify that the app returns to the "Tasks" screen</action>
+    <action>Verify that "Walked out on" is not yet on screen, because the call is still in flight</action>
     <action>Wait ten seconds, which is twice the pinned call latency</action>
-    <action>Verify that "Walked out on" is not on screen</action>
-    <action>Verify that no error message and no "Task deleted" message are on screen</action>
-    <action>Verify that exactly four elements with the content description "Delete task" are on screen</action>
+    <action>Verify that "Walked out on" is on screen</action>
+    <action>Verify that "Walked out on" is the last row in the list</action>
+    <action>Verify that no error message is on screen</action>
+    <action>Verify that exactly five elements with the content description "Delete task" are on screen</action>
   </actions>
 </journey>

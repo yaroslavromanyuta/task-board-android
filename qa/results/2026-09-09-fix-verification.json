@@ -1,0 +1,183 @@
+{
+  "run": "2026-09-09 fix verification — issues #12 to #18",
+  "device": "Samsung SM-G973F (RF8M32EDAQD), Android 12 / API 31, 1080x2280 @ 420 dpi, animations off",
+  "build": ":app:installDebug, working tree with the fixes for #12-#18",
+  "scope": "The eight journeys the fixes touched. The other 46 were not re-run.",
+  "summary": {
+    "journeys": 8,
+    "passed": 8,
+    "failed": 0,
+    "note": "TL-19 failed on its first attempt and exposed a real defect in the fix for #16; it passes against the corrected fix. TL-09 and TL-13 each needed a second attempt for timing reasons only — a layout dump costs ~3 s out of a 10 s snackbar window."
+  },
+  "journeys": [
+    {
+      "journey": "AX-03 The list and the form stay usable at 200% font scale",
+      "status": "PASSED",
+      "results": [
+        { "action": "Verify that \"Renew domain registration\" is on screen", "status": "PASSED", "commands": ["adb shell settings put system font_scale 2.0", "adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that the checkbox with the content description \"Mark complete\" on that row is fully within the screen bounds", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "bounds [22,670][148,796], inside 1080x2280" },
+        { "action": "Verify that the element with the content description \"Delete task\" on that row is fully within the screen bounds", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "bounds [965,701][1028,764]" },
+        { "action": "Verify that the \"Renew domain registration\" row does not overlap the \"Search by title\" field above it", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "search field ends y=491, row title starts y=586" },
+        { "action": "Verify that \"Migrate the analytics pipeline to the new warehouse and validate dashboards\" is truncated to at most two lines and does not overlap the row above it", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "title bounds [147,1543][933,1740], 197 px = two lines at this scale; row above ends y=1479" },
+        { "action": "Verify that the fourth row shows \"Due yesterday\" and an element with the content description \"Medium\"", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Tap the element with the content description \"Add task\"", "status": "PASSED", "commands": ["adb shell input tap 964 2024"] },
+        { "action": "Verify that the \"Title\" and \"Notes (optional)\" labels are on screen and not truncated", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that the \"Save\" button is on screen and does not overlap the element with the content description \"Back\"", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "Save [886,147][1037,245], Back [43,165][106,228]" },
+        { "action": "Verify that the \"Low\", \"Medium\" and \"High\" priority chips are all on screen and none is clipped by the screen edge", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "High ends x=821 of 1080" },
+        { "action": "Verify that \"No due date\" and \"Set date\" are both on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Type \"Pad the list one\" into the \"Title\" field and tap the \"Save\" button", "status": "PASSED", "commands": ["adb shell input tap 540 438", "adb shell input text 'Pad%sthe%slist%sone'", "adb shell input tap 961 196"] },
+        { "action": "Tap the element with the content description \"Add task\"", "status": "PASSED", "commands": ["adb shell input tap 964 2024"] },
+        { "action": "Type \"Pad the list two\" into the \"Title\" field and tap the \"Save\" button", "status": "PASSED", "commands": ["adb shell input tap 540 438", "adb shell input text 'Pad%sthe%slist%stwo'", "adb shell input tap 961 196"] },
+        { "action": "Verify that \"Pad the list two\" is not visible on screen, because six rows at this scale no longer fit", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "node present with bounds [0,0][0,0] and no Delete child laid out" },
+        { "action": "Scroll the list to the bottom", "status": "PASSED", "commands": ["adb shell input swipe 540 1700 540 700 300"] },
+        { "action": "Verify that \"Pad the list two\" is now on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "bounds [147,1710][693,1796]" },
+        { "action": "Verify that the bottom row still has an element with the content description \"Delete task\" fully within the screen bounds", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty", "adb exec-out screencap -p"], "comment": "THE #12 REGRESSION GUARD. Delete bounds [965,1770][1028,1833]; the FAB sits at [933,2007][996,2042], entirely below it, in the new 88 dp of bottom content padding. Before the fix this node was absent from the dump" }
+      ]
+    },
+    {
+      "journey": "TL-09 A second delete does not replace the first undo offer",
+      "status": "PASSED",
+      "attempts": 2,
+      "comment": "First attempt lost the first offer to its own 10 s window: two layout dumps between the deletes cost ~7 s. Re-run as one device-side sequence with sleeps, no dumps inside the window. The intermediate assertions were confirmed on the first attempt.",
+      "results": [
+        { "action": "Tap the element with the content description \"Delete task\" on the \"Renew domain registration\" row", "status": "PASSED", "commands": ["adb shell input tap 996 573"] },
+        { "action": "Verify that a message reading \"Task deleted\" is on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Immediately tap the element with the content description \"Delete task\" on the \"Reply to design feedback\" row", "status": "PASSED", "commands": ["adb shell input tap 996 573"] },
+        { "action": "Verify that both rows are gone and exactly two elements with the content description \"Delete task\" are on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that a message reading \"Task deleted\" with an \"Undo\" action is still on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "THE #15 SIBLING GUARD. The second delete did not displace the first offer" },
+        { "action": "Tap the \"Undo\" action on that message", "status": "PASSED", "commands": ["adb shell input tap 951 1869"] },
+        { "action": "Verify that \"Renew domain registration\" is on screen again, as the offer made first", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that a second message reading \"Task deleted\" with an \"Undo\" action is now on screen", "status": "PASSED", "commands": ["adb shell input tap 951 1869"], "comment": "Confirmed by the second Undo landing and restoring the second task" },
+        { "action": "Tap the \"Undo\" action on that message", "status": "PASSED", "commands": ["adb shell input tap 951 1869"] },
+        { "action": "Verify that \"Reply to design feedback\" is on screen again", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that exactly four elements with the content description \"Delete task\" are on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "Both restored at the bottom, in offer order: Renew then Reply" }
+      ]
+    },
+    {
+      "journey": "TL-13 An undo that fails offers the task again",
+      "status": "PASSED",
+      "attempts": 3,
+      "comment": "Attempts 1 and 2 were timing losses, not app failures: the re-posted offer appears at failure+10 s and lasts 10 s, and a host-side dump plus round trips ate the window. Attempt 3 issued the second Undo device-side at +12 s.",
+      "results": [
+        { "action": "Tap the element with the content description \"Delete task\" on the \"Book dentist\" row", "status": "PASSED", "commands": ["adb shell input tap 996 905"] },
+        { "action": "Verify that a message reading \"Task deleted\" is on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Using adb, break the source", "status": "PASSED", "commands": ["adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 1.0", "adb logcat -d -s QaMockControls"] },
+        { "action": "Tap the \"Undo\" action on that message", "status": "PASSED", "commands": ["adb shell input tap 951 1869"] },
+        { "action": "Verify that \"No connection. Check your network and try again.\" is on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that \"Book dentist\" is not on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Using adb, heal the source", "status": "PASSED", "commands": ["adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 0.0"] },
+        { "action": "Wait ten seconds for the failure message to expire", "status": "PASSED", "commands": ["adb shell sleep 11"] },
+        { "action": "Verify that a message reading \"Task deleted\" with an \"Undo\" action is on screen again", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "THE #13 REGRESSION GUARD. Before the fix the offer was spent and the task unrecoverable" },
+        { "action": "Tap the \"Undo\" action on that message", "status": "PASSED", "commands": ["adb shell input tap 951 1869"] },
+        { "action": "Verify that \"Book dentist\" is on screen again", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "Restored checked and described \"Mark incomplete\" — the completion flag survived too" },
+        { "action": "Verify that exactly four elements with the content description \"Delete task\" are on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] }
+      ]
+    },
+    {
+      "journey": "TL-15 A restore that fails halfway says which field it lost",
+      "status": "PASSED",
+      "attempts": 1,
+      "comment": "Reproduced first time. With the latency pinned at 4000 ms the broadcast landed 1.5 s after Undo — inside createTask's window, before setCompleted rolled its dice.",
+      "results": [
+        { "action": "Verify that the \"Book dentist\" row has a checked checkbox", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Tap the element with the content description \"Delete task\" on the \"Book dentist\" row", "status": "PASSED", "commands": ["adb shell input tap 996 905"] },
+        { "action": "Verify that a message reading \"Task deleted\" is on screen", "status": "PASSED", "commands": ["adb shell input tap 951 1869"], "comment": "Confirmed by the Undo tap landing" },
+        { "action": "Tap the \"Undo\" action on that message", "status": "PASSED", "commands": ["adb shell input tap 951 1869"] },
+        { "action": "Using adb, break the source one second later, while the restore is still in flight", "status": "PASSED", "commands": ["adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 1.0"] },
+        { "action": "Verify that \"Book dentist\" is on screen again", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that \"Task restored, but it came back unfinished.\" is on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "THE #14 REGRESSION GUARD. Before the fix this read \"No connection. Check your network and try again.\" over a row that had visibly returned" },
+        { "action": "Verify that \"No connection. Check your network and try again.\" is not on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that the restored \"Book dentist\" row has an unchecked checkbox described as \"Mark complete\"", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that the restored \"Book dentist\" title is not struck through", "status": "PASSED", "commands": ["adb exec-out screencap -p"], "comment": "Read off the screenshot; the dump carries no text decoration" }
+      ]
+    },
+    {
+      "journey": "TL-16 A failure arriving over a pending undo waits its turn",
+      "status": "PASSED",
+      "attempts": 1,
+      "comment": "Run in two passes to keep each inside the 10 s offer window: pass A asserted the offer surviving the failure, pass B the ordering after Undo.",
+      "results": [
+        { "action": "Tap the element with the content description \"Delete task\" on the \"Renew domain registration\" row", "status": "PASSED", "commands": ["adb shell input tap 996 573"] },
+        { "action": "Verify that a message reading \"Task deleted\" is on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Using adb, break the source", "status": "PASSED", "commands": ["adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 1.0"] },
+        { "action": "Tap the checkbox with the content description \"Mark complete\" on the \"Reply to design feedback\" row", "status": "PASSED", "commands": ["adb shell input tap 85 574"] },
+        { "action": "Verify that the message reading \"Task deleted\" with its \"Undo\" action is still on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "THE #15 REGRESSION GUARD. Before the fix the failure snackbar took this slot and the deleted task with it" },
+        { "action": "Verify that the \"Reply to design feedback\" row still has an unchecked checkbox", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Using adb, heal the source", "status": "PASSED", "commands": ["adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 0.0"] },
+        { "action": "Tap the \"Undo\" action on that message", "status": "PASSED", "commands": ["adb shell input tap 951 1869"] },
+        { "action": "Verify that \"Renew domain registration\" is on screen again", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that \"No connection. Check your network and try again.\" is now on screen, behind the offer it used to replace", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "The failure was queued, not swallowed" }
+      ]
+    },
+    {
+      "journey": "TL-19 A task created under an active query is brought into view",
+      "status": "PASSED",
+      "attempts": 2,
+      "comment": "FAILED on the first attempt against the original fix for #16, and the failure was real. See the defect note below.",
+      "results": [
+        { "action": "Tap the \"Search by title\" field", "status": "PASSED", "commands": ["adb shell input tap 321 395"] },
+        { "action": "Type \"invoice\" into the \"Search by title\" field", "status": "PASSED", "commands": ["adb shell input text invoice"] },
+        { "action": "Verify that the text “No tasks match “invoice”.” is on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Tap the element with the content description \"Add task\"", "status": "PASSED", "commands": ["adb shell input keyevent KEYCODE_BACK", "adb shell input tap 964 2024"] },
+        { "action": "Type \"Bought milk\" into the \"Title\" field", "status": "PASSED", "commands": ["adb shell input tap 540 406", "adb shell input text 'Bought%smilk'"] },
+        { "action": "Tap the \"Save\" button", "status": "PASSED", "commands": ["adb shell input tap 993 196"] },
+        { "action": "Verify that the app returns to the \"Tasks\" screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that the \"Search by title\" field is empty", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "THE #16 REGRESSION GUARD. FAILED on attempt 1 — the field still read \"invoice\" and the \"Clear search\" control was still present" },
+        { "action": "Verify that \"Bought milk\" is on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that \"Bought milk\" is the last row in the list", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that all four seed rows are on screen as well", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Type \"invoice\" into the \"Search by title\" field again", "status": "PASSED", "commands": ["adb shell input tap 321 395", "adb shell input text invoice"] },
+        { "action": "Verify that the text “No tasks match “invoice”.” is on screen, so the save result was consumed and does not clear a later query", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] }
+      ]
+    },
+    {
+      "journey": "TL-21 A checkbox is inert while its own write is in flight",
+      "status": "PASSED",
+      "attempts": 1,
+      "comment": "Run in two passes: one to read the disabled attribute inside the write, one to issue both taps inside it without a dump between them. A dump costs the whole 3000 ms window.",
+      "results": [
+        { "action": "Verify that the \"Renew domain registration\" row has an unchecked checkbox", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Tap the checkbox with the content description \"Mark complete\" on the \"Renew domain registration\" row", "status": "PASSED", "commands": ["adb shell input tap 85 574"] },
+        { "action": "Verify, while the write is still in flight, that this checkbox now reports itself disabled", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "THE #17 REGRESSION GUARD. enabled=\"false\" on that row's CheckBox node only; the other three stayed enabled=\"true\"" },
+        { "action": "Immediately tap that same checkbox a second time, within half a second, while the first write is still in flight", "status": "PASSED", "commands": ["adb shell input tap 85 574"] },
+        { "action": "Wait ten seconds for the write to finish", "status": "PASSED", "commands": ["adb shell sleep 10"] },
+        { "action": "Verify that the \"Renew domain registration\" row has a checked checkbox", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that the \"Renew domain registration\" title is struck through", "status": "PASSED", "commands": ["adb exec-out screencap -p"] },
+        { "action": "Verify that no error message is on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that the checkbox on that row is now described as \"Mark incomplete\" and is enabled again", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Tap that checkbox once and wait ten seconds", "status": "PASSED", "commands": ["adb shell input tap 85 574", "adb shell sleep 10"] },
+        { "action": "Verify that the row is unchecked again, so the control is only held for the duration of a write", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] }
+      ]
+    },
+    {
+      "journey": "ED-10 A save already in flight survives leaving the editor",
+      "status": "PASSED",
+      "attempts": 1,
+      "results": [
+        { "action": "Tap the element with the content description \"Add task\"", "status": "PASSED", "commands": ["adb shell input tap 964 2024"] },
+        { "action": "Type \"Walked out on\" into the \"Title\" field", "status": "PASSED", "commands": ["adb shell input tap 540 406", "adb shell input text 'Walked%sout%son'"] },
+        { "action": "Tap the \"Save\" button", "status": "PASSED", "commands": ["adb shell input tap 993 196"] },
+        { "action": "Immediately tap the element with the content description \"Back\", before the save completes", "status": "PASSED", "commands": ["adb shell input tap 74 196"], "comment": "0.3 s after Save, against a 5000 ms pinned latency" },
+        { "action": "Verify that the app returns to the \"Tasks\" screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that \"Walked out on\" is not yet on screen, because the call is still in flight", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "Four rows at that moment" },
+        { "action": "Wait ten seconds, which is twice the pinned call latency", "status": "PASSED", "commands": ["adb shell sleep 10"] },
+        { "action": "Verify that \"Walked out on\" is on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"], "comment": "THE #18 REGRESSION GUARD. Before the fix popping the editor cancelled viewModelScope and the createTask call with it, and the task never existed" },
+        { "action": "Verify that \"Walked out on\" is the last row in the list", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that no error message is on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] },
+        { "action": "Verify that exactly five elements with the content description \"Delete task\" are on screen", "status": "PASSED", "commands": ["adb exec-out uiautomator dump /dev/tty"] }
+      ]
+    }
+  ],
+  "defect_found_by_this_run": {
+    "journey": "TL-19",
+    "issue": "#16, in the first fix for it",
+    "what_happened": "After a save made under the query \"invoice\", the list still showed \"No tasks match “invoice”.\" and the search field still held the query. The fix had no effect on the device.",
+    "cause": "The first fix wrote the result onto NavBackStackEntry.savedStateHandle from TodoNavHost and read it from a SavedStateHandle injected into TaskListViewModel. Those are two different handles: the entry's own handle is held under its internal holder's key, while Hilt builds the ViewModel's from the same SavedStateRegistry under the ViewModel's key. A value written to one is invisible to the other.",
+    "why_the_unit_test_missed_it": "The test constructed the ViewModel with a SavedStateHandle it then wrote into directly, so the two handles were the same object by construction. The defect lives in the wiring between the back stack and Hilt, which no JVM test instantiates.",
+    "fix": "taskListSection reads the result from the back stack entry, collects it as state and hands it to TaskListRoute, which calls TaskListViewModel.onTaskSaved() and then clears the flag. The ViewModel no longer takes a SavedStateHandle."
+  },
+  "notes": [
+    "A uiautomator dump costs about 3 s and the undo snackbar lasts 10 s. Three of the eight journeys needed their taps issued as one device-side sequence with sleeps, because host round trips plus a dump inside the window spend it. TL-09 and TL-13 each failed once on exactly that and passed once the dump was moved out of the window.",
+    "qa/README.md says the failure snackbar is SnackbarDuration.Short. It is not any more: TaskListScreen passes SnackbarDuration.Long for every message kind since the fix for TL-08, so both kinds last about ten seconds. The README paragraph is stale."
+  ]
+}

@@ -2,9 +2,9 @@
 
 Fifty-four end-to-end scenarios for Task Board, written in the XML journey format and run against a
 real device or emulator through the `android` CLI. Seventeen were added by the review of 2026-09-09
-and run the same day; `TEST-PLAN.md` marks those 🆕 and records which one fails.
+and run the same day; `TEST-PLAN.md` marks those 🆕 and carries the run log and the watchlist.
 
-They exist because the 77 unit tests in this repo assert ViewModel *state* and never render a pixel.
+They exist because the 86 unit tests in this repo assert ViewModel *state* and never render a pixel.
 Nothing below the ViewModel boundary — the §9 precedence table as it actually draws, real
 navigation, snackbar interaction, the date-picker dialog, rotation, process death, the fact that an
 in-memory store forgets everything on cold start — had any automated coverage before this directory
@@ -180,13 +180,14 @@ way.
 
 ### Two things that will waste a run if you miss them
 
-**Snackbars are short, and the two kinds differ.** A failure snackbar is
-`SnackbarDuration.Short` — about four seconds — so the dump has to *start* within roughly a second of
-the action that caused it. The delete snackbar is `SnackbarDuration.Long`, about ten seconds, since
-the fix for TL-08's finding; before that fix it was `Indefinite` and never left on its own. Ten
-seconds is also the whole budget for any journey that has to break the source *between* a delete and
-its Undo — TL-13 and TL-15 both do. Do not use `android layout` for either kind: at 20 s a call it
-misses the first and expires the second while you read it.
+**Snackbars last about ten seconds, and a dump costs three of them.** `TaskListScreen` passes
+`SnackbarDuration.Long` for every message kind — the failure, the delete offer and the partial-restore
+notice alike — since the fix for TL-08's finding; before that fix the delete offer was `Indefinite`
+and never left on its own. Ten seconds is the whole budget for any journey that has to act between a
+delete and its Undo, and `adb exec-out uiautomator dump` spends a third of it. TL-09 and TL-13 each
+lost a run to exactly that: the offer expired while the dump was being read. Issue the taps as one
+`adb shell` line with device-side `sleep`s and dump only at the end. Never use `android layout` inside
+a snackbar window: at 20 s a call it expires the snackbar while you read it.
 
 **The soft keyboard covers the snackbar.** After typing into the search field or a form, the IME sits
 over the bottom of the screen where the snackbar renders. A tap aimed at "Undo" lands on a key

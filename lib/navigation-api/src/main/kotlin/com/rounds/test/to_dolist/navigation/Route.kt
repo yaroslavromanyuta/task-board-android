@@ -10,7 +10,17 @@ import kotlinx.serialization.Serializable
 sealed interface Route {
 
     @Serializable
-    data object TaskList : Route
+    data object TaskList : Route {
+
+        /**
+         * Key the editor's "a save landed" result is handed back under, written onto this
+         * destination's `SavedStateHandle` by whoever pops the editor and read by the list.
+         *
+         * It lives here rather than in either feature because both ends need the same string and the
+         * two features cannot see each other — the same reason the routes themselves are here.
+         */
+        const val TASK_SAVED_RESULT = "task_saved"
+    }
 
     /** [taskId] null means "create a new task"; a non-null id opens that task for viewing and editing. */
     @Serializable
