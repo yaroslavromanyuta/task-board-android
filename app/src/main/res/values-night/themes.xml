@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+      Compose's TodoListTheme already follows isSystemInDarkTheme(), but the native window (the
+      cold-start background drawn before Compose's first frame, plus the default status/nav bar
+      chrome) is governed by this framework theme. Without a night variant it stayed pinned to the
+      light Material theme regardless of system setting, so the app never looked dark until Compose
+      took over — this variant lets the window itself follow the system setting too.
+    -->
+    <style name="Theme.TodoList" parent="android:Theme.Material.NoActionBar" />
+</resources>
