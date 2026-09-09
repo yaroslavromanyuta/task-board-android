@@ -1,11 +1,13 @@
 # Test plan
 
-Fifty-four journeys, 523 steps. Run instructions are in [`README.md`](README.md); this file is the
+Fifty-four journeys, 539 steps. Run instructions are in [`README.md`](README.md); this file is the
 catalogue, the traceability matrix and the list of things expected to fail.
 
-All fifty-four have now been run. Fifty-three pass; **AX-03 fails**, on a defect it found — the
-floating action button covers the last row's Delete control. The seventeen journeys added by the
-review of 2026-09-09 are marked 🆕 in the catalogue below.
+All fifty-four have been run. Eight of them have since been rewritten: AX-03 failed on a defect it
+found, and seven more passed by asserting behaviour that has now been ruled wrong and fixed — issues
+#12 to #18, closed together. **Those eight were re-run on the device against the fixes and all eight
+pass**; the other 46 passed on the build before the fixes and were not re-run. The seventeen journeys
+added by the review of 2026-09-09 are marked 🆕 in the catalogue below.
 
 ## What this suite is for, and what it deliberately leaves alone
 
@@ -65,37 +67,44 @@ notice immediately, because it takes their list away.
 | TL-06 | Undo restores the task, at the bottom, with a new id | FR-12 |
 | TL-07 | Undoing a completed task brings it back completed | FR-12 |
 | TL-08 | The undo offer expires and the task stays deleted | FR-12 🔧 |
-| TL-09 | A second delete replaces the first undo offer | FR-12 ⚠ |
+| TL-09 | A second delete does not replace the first undo offer | FR-12 🔧 |
 | TL-10 | Undo under an active search restores outside the filter | FR-10 + FR-12 |
 | TL-11 | Search matches titles only, case-insensitively | FR-10 |
 | TL-12 | Sorting reorders the list and composes with search | FR-11 |
-| TL-13 | An undo that fails leaves the task gone with no second offer | FR-12 🆕 ⚠ |
+| TL-13 | An undo that fails offers the task again | FR-12 🆕 🔧 |
 | TL-14 | A delete that fails keeps the row and offers no undo | FR-04 🆕 |
-| TL-15 | A restore that fails halfway brings the task back unfinished | FR-12 🆕 ⚠ |
-| TL-16 | A failure arriving over a pending undo takes the offer away | FR-12 🆕 ⚠ |
+| TL-15 | A restore that fails halfway says which field it lost | FR-12 🆕 🔧 |
+| TL-16 | A failure arriving over a pending undo waits its turn | FR-12 🆕 🔧 |
 | TL-17 | An undo offer survives a trip to the editor and back | FR-12 🆕 |
 | TL-18 | Deleting the only match shows the no-matches copy, not the empty state | FR-08 + FR-10 🆕 |
-| TL-19 | A task created under an active query lands where the user cannot see it | FR-02 + FR-10 🆕 ⚠ |
+| TL-19 | A task created under an active query is brought into view | FR-02 + FR-10 🆕 🔧 |
 | TL-20 | A double-tapped row opens one editor, not two | FR-05 🆕 |
-| TL-21 | Two taps on a checkbox during one write both mean complete | FR-03 🆕 ⚠ |
+| TL-21 | A checkbox is inert while its own write is in flight | FR-03 🆕 🔧 |
 
 TL-06 and TL-07 are the two halves of the undo guarantee that cost the most to get right. `TaskApi`
 has no restore operation, so `RestoreTaskUseCase` re-creates the task — which means a new id, a new
 position at the bottom of the list, and a second `setCompleted` call for a task that was completed.
 TL-06 pins the position change as intended behaviour rather than a bug; TL-07 catches the dropped
 second call, the failure mode where a completed task quietly returns unfinished. TL-15 is the third
-side of the same triangle: the two calls are not atomic, so a restore can half-succeed and put a
-completed task back unfinished with nothing but a network snackbar to explain it.
+side of the same triangle: the two calls still are not atomic — that needs a restore operation the
+source does not have — so what it now pins is that a half-succeeded restore says so, in a sentence
+about the flag rather than a bare network error over a row that visibly arrived.
+
+TL-09, TL-13 and TL-16 are three routes to one rule, and they moved together when it changed: a
+`TaskDeleted` message holds the only copy of a deleted task, so nothing may displace one that has not
+been acted on. A second delete used to overwrite it, an unrelated failure used to overwrite it, and a
+failed undo used to spend it. The state holds a queue now, and each of the three asserts its own way
+in.
 
 TL-13, TL-14 and TL-16 close the suite's largest gap. Every write in the app had a happy path on a
 device and no failing one except the toggle in ST-04 — yet ~15% is the shipped failure rate, so the
 failing path is what one user in seven meets. Each of the three is a different consequence: a delete
-that does not happen, an undo that does not happen, and an unrelated failure eating an undo offer
-that would have.
+that does not happen, an undo that does not happen, and an unrelated failure landing on top of an
+undo offer.
 
 TL-20 and TL-21 both live inside a call. They exist because a test dispatcher closes that window
 before a second tap can land in it: on a device, two taps in one frame are ordinary, and the second
-one either pushes a second editor or resends the same write.
+one either pushes a second editor or lands on a control whose write is still out.
 
 ### ED — the editor (10)
 
@@ -110,7 +119,7 @@ one either pushes a second editor or resends the same write.
 | ED-07 | A failed edit-mode load replaces the form and retries | FR-09 |
 | ED-08 | A double-tapped Save creates one task, not two | FR-02 🆕 |
 | ED-09 | Saving a task the source has forgotten reports NotFound over the form | FR-09, §8 taxonomy 🆕 |
-| ED-10 | Leaving during an in-flight save drops it silently | FR-02 🆕 ⚠ |
+| ED-10 | A save already in flight survives leaving the editor | FR-02 🆕 🔧 |
 
 ED-06 and ED-07 are the pair that proves the editor's three failure fields are actually three. A
 failed *save* must leave the form untouched under a snackbar; a failed *load* has no form worth
@@ -118,10 +127,10 @@ protecting, so it becomes the screen. Collapsing the two is the obvious refactor
 loses the user's typing. ED-07 now taps Retry as well as observing it: the journey was named for a
 retry it never performed, so the editor's recovery path had no on-device coverage at all.
 
-ED-08 and ED-10 are the two ends of an asynchronous save. One is guarded — `onSave` returns early
-while `isSaving` — and the other is not: popping the editor clears the ViewModel, cancels the scope
-and takes the in-flight `createTask` with it, so the task is never created and the user is never
-told. ED-09 is what makes `DataError.NotFound` reachable without inventing a scenario: the ids the
+ED-08 and ED-10 are the two ends of an asynchronous save, and both are now guarded. `onSave` returns
+early while `isSaving`, and the call itself runs on an application-scoped coroutine, so popping the
+editor no longer cancels a write the user had already committed to — only the reporting of it is
+lifecycle-bound. ED-09 is what makes `DataError.NotFound` reachable without inventing a scenario: the ids the
 source hands out restart with the process, and a restored editor can outlive the id it holds.
 
 ### DD — due dates (6)
@@ -164,7 +173,7 @@ is the one line standing between the user's typing and the source's older copy o
 | AX-01 | Every icon-only control carries a description | NFR-09 |
 | AX-02 | The row checkbox announces the action its tap performs | NFR-09 🔧 |
 | TH-01 | Dark mode keeps the priority colours apart | FR-14, TB-705, TB-706 |
-| AX-03 | The list and the form stay usable at 200% font scale | NFR-09, FR-01 🆕 ❌ |
+| AX-03 | The list and the form stay usable at 200% font scale | NFR-09, FR-01 🆕 🔧 |
 | TH-02 | Switching to dark mode keeps a half-filled form | NFR-06, FR-14 🆕 |
 
 Both AX-01 and AX-02 cover ground that `BACKLOG.md` task TB-308 verified by reading the code. This is
@@ -172,8 +181,9 @@ the first time either is checked against what the system actually exposes.
 
 AX-03 is the first journey that scrolls anything. FR-01 asks for a scrollable list and the four seed
 rows never fill a screen — not even at 200%, which the run measured — so the journey adds two rows of
-its own to overflow the viewport. That is what turned up issue #12: the list scrolls, and the row it
-scrolls to has a Delete control the FAB is sitting on. TH-02 covers the configuration change users
+its own to overflow the viewport. That is what turned up issue #12: the list scrolled, and the row it
+scrolled to had a Delete control the FAB was sitting on. Its last action is now the regression guard
+over the bottom content padding that fixed it. TH-02 covers the configuration change users
 actually perform — NFR-06 says configuration change, and LC-01 to LC-03 only ever rotate.
 
 ## Suites
@@ -185,7 +195,9 @@ touches both screens, both failure channels, navigation and a configuration chan
 ST-01  ST-04  TL-01  TL-05  TL-06  ED-01  ED-04  LC-01
 ```
 
-**Full — all 54.** Force-stop between each one. 53 pass on the current build; AX-03 fails on issue #12.
+**Full — all 54.** Force-stop between each one. The last full run was against the build before issues
+#12 to #18 were fixed. The eight journeys those fixes touched were rewritten and re-run on 2026-09-09
+and pass; the other 46 have not been re-run since the fixes landed.
 
 **Write-failure set — 6 journeys.** The failing half of every write, which the suite had almost none
 of before the review. Worth running as a block, because they share the broadcast recipe and each one
@@ -195,9 +207,9 @@ needs the source broken at a different moment.
 TL-13  TL-14  TL-15  TL-16  ED-09  ED-10
 ```
 
-⚠ marks a journey that asserts behaviour someone still has to rule on; 🔧 marks one that was failing
-and is now a regression guard over a fix; 🆕 marks one added on 2026-09-09; ❌ marks one failing on the
-current build.
+⚠ marks a journey that asserts behaviour someone still has to rule on; 🔧 marks one that has been
+rewritten as a regression guard over a fix — either because it failed, or because it passed by
+asserting what was then judged wrong; 🆕 marks one added on 2026-09-09.
 
 ## Run log
 
@@ -344,41 +356,107 @@ Three things about running these are worth keeping:
   reports `checked="true"`; on this device the `CheckBox` child reads `false` and its parent `View`
   reads `true`. Match the parent.
 
+### 2026-09-09 — issues #12 to #18 fixed
+
+No device time. All seven open defects closed in one change, and the eight journeys that encoded the
+old behaviour rewritten as regression guards: AX-03, TL-09, TL-13, TL-15, TL-16, TL-19, TL-21, ED-10.
+TL-09 was closed by the same change as TL-16 without ever being filed as an issue of its own.
+
+`./gradlew test lint` green: 86 unit tests, no lint errors - nine more than before, plus two rewritten
+where the old assertion was the defect. But four of the seven fixes are only partly visible below the
+device - the FAB overlap and the disabled control are Compose-layer, the back-stack result is
+navigation, and the cancelled save can only be approximated by cancelling `viewModelScope` by hand.
+So the eight journeys were run on the device the same day; that run is the section below, and it
+found a defect in one of the fixes.
+
+What changed, per issue:
+
+| Issue | Fix |
+|---|---|
+| #12 | `contentPadding = PaddingValues(bottom = 88.dp)` on the list, so the FAB stops covering the last row's Delete |
+| #13 | `onUndoDelete` re-posts the offer when the restore fails, instead of spending it before the call |
+| #14 | `RestoreTaskUseCase` returns a `RestoreOutcome`, so a re-created task whose flag did not land is reported as a partial restore and worded as one |
+| #15 | `TaskListUiState.messages` is a queue; nothing displaces a `TaskDeleted` that has not been acted on. Closes TL-09 as well |
+| #16 | The editor reports a successful save back through the back stack entry; `taskListSection` reads it there and the list clears its query, so the new task is on screen |
+| #17 | The row is held for the duration of its completion write and the checkbox is disabled, the shape `TaskEditorViewModel.onSave` already used |
+| #18 | The save runs on an `@ApplicationScope` coroutine and is only awaited from `viewModelScope`, so leaving the editor no longer cancels it |
+
+### 2026-09-09 — the eight fix journeys, run
+
+Same device as every other run: Samsung SM-G973F (`RF8M32EDAQD`), Android 12 / API 31, animations
+off. Build: `:app:installDebug` from the working tree carrying the fixes. Results in
+[`results/2026-09-09-fix-verification.json`](results/2026-09-09-fix-verification.json).
+
+**8 of 8 pass**, after one of them failed and sent a fix back for rework.
+
+| Id | Result | Note |
+|---|---|---|
+| AX-03 | PASSED | The bottom row's Delete is in the dump at `[965,1770][1028,1833]` and the FAB sits entirely below it. This journey failed on the previous build |
+| TL-09 | PASSED | Both offers honoured, in order. Needed a second attempt for timing — see below |
+| TL-13 | PASSED | The offer returns behind the failure, and the second Undo restores the task with its completion flag |
+| TL-15 | PASSED | First attempt. "Task restored, but it came back unfinished." over an unchecked, unstruck row |
+| TL-16 | PASSED | The offer survives an unrelated failure; the failure is then shown after it, not instead of it |
+| TL-19 | **FAILED, then PASSED** | The defect below. Passes against the reworked fix |
+| TL-21 | PASSED | `enabled="false"` on that row's checkbox alone while its write is out; the row toggles normally afterwards |
+| ED-10 | PASSED | The task appears ten seconds after Back was tapped 0.3 s into a 5 s call |
+
+**TL-19 failed, and the failure was real.** The first fix for #16 wrote the "a save landed" result
+onto `NavBackStackEntry.savedStateHandle` in `TodoNavHost` and read it from a `SavedStateHandle`
+injected into `TaskListViewModel`. Those are two different handles — the entry keeps its own under an
+internal holder's key, and Hilt builds the ViewModel's from the same registry under the ViewModel's
+key — so the write never arrived and the query survived the save exactly as before. The unit test
+passed because it constructed the ViewModel with the handle it then wrote into, which made them the
+same object by construction; the defect lives in the wiring between the back stack and Hilt, which no
+JVM test instantiates. `taskListSection` now reads the result off the entry, collects it as state and
+hands it to `TaskListRoute`, which calls `TaskListViewModel.onTaskSaved()`; the ViewModel takes no
+`SavedStateHandle` at all.
+
+That is the whole case for this run. Seven of the eight journeys confirmed what the unit tests already
+claimed. The eighth is the one that could not be checked below the device, and it was wrong.
+
+Two things about running these are worth keeping:
+
+- **A dump costs 3 s of a 10 s snackbar.** TL-09 and TL-13 each failed once purely on that: host round
+  trips plus one `uiautomator dump` inside the undo window spent it, and the offer expired before the
+  tap. Issue the taps as one `adb shell` line with device-side `sleep`s and dump only at the end.
+- **`README.md` is stale about snackbar duration.** It says a failure snackbar is
+  `SnackbarDuration.Short`. `TaskListScreen` passes `Long` for every message kind since the fix for
+  TL-08, so both last about ten seconds — which is what makes TL-13's "wait for the failure to expire,
+  then read the offer" step land at +11 s rather than +5 s.
+
 ## Known-defect watchlist
 
 Thirteen entries. Five were written in advance as journeys asserting behaviour that may well be
 wrong; TL-08 and AX-03 were found by running them; the other six were written by the 2026-09-09
 review and confirmed on the device the same day.
 
-**Three are now fixed** — TL-08 (#7), LC-03 (#8) and AX-02 (#9) — and their journeys have been
-rewritten as regression guards rather than defect probes. They are kept in the table because the
-reasoning is worth not losing.
+**Eleven are now fixed** — TL-08 (#7), LC-03 (#8) and AX-02 (#9) on 2026-09-08, and AX-03 (#12),
+TL-13 (#13), TL-15 (#14), TL-16 (#15), TL-19 (#16), TL-21 (#17), ED-10 (#18) and TL-09 on 2026-09-09.
+Their journeys are rewritten as regression guards rather than defect probes. They are kept in the
+table because the reasoning is worth not losing. The eight from 2026-09-09 have not been re-run on a
+device.
 
-**Three remain open.** TL-09, ED-05 and ED-02 assert the current behaviour, so they pass; passing
-*is* the finding, and each names a trade-off that is product's call rather than QA's.
+TL-09 never had an issue of its own: it is the same single message slot as TL-16, reached by
+deleting twice instead of by losing a dice roll, and the queue closed both.
 
-**Six were confirmed on 2026-09-09** and filed as issues #13 to #18. TL-13, TL-15, TL-16, TL-19,
-TL-21 and ED-10 assert the current behaviour, so each one passing *is* its finding.
-
-**One is a plain failure.** AX-03 (#12) is the only entry here whose journey fails: it asserts
-something reasonable — that the bottom row's Delete control is reachable — and the app does not do
-it.
+**Two remain open.** ED-05 and ED-02 assert the current behaviour, so they pass; passing *is* the
+finding, and each names a trade-off that is product's call rather than QA's.
 
 | Id | What the journey found | Why it matters | The fix |
 |---|---|---|---|
 | **TL-08** ✅ #7 | *Fixed.* The undo snackbar never went away. `TaskListScreen.kt:168-171` calls `showSnackbar(message, actionLabel)` with no `duration`, and Material3 defaults to `SnackbarDuration.Indefinite` whenever an `actionLabel` is present — so "Task deleted" sits over the list until the user taps Undo or swipes it off, and `withDismissAction` is false, so there is no × either | The failure snackbar next to it *is* `Short`, which is what makes this look unintended rather than chosen. It permanently occludes the bottom of the list, and `message` stays set in the state the whole time. Confirmed on device: still on screen after 25 s | Pass `duration = SnackbarDuration.Long` explicitly |
-| **TL-09** ⚠ open | `TaskListUiState` holds one nullable `message`, so a second delete overwrites the first `TaskDeleted` before the user can act on it | Undo is the only route back and it is offered exactly once. Delete two rows quickly and the first is unrecoverable, silently | A queue of pending deletes, or a confirmation on the second |
+| **TL-09** ✅ | *Fixed with #15.* `TaskListUiState` held one nullable `message`, so a second delete overwrote the first `TaskDeleted` before the user could act on it | Undo is the only route back and it was offered exactly once. Delete two rows quickly and the first was unrecoverable, silently | `messages` is a queue; both offers are honoured, in the order they were made |
 | **ED-05** ⚠ open | Back discards an unsaved edit with no prompt; `onBack` and `onDone` both go to `navigateUp` (`TodoNavHost.kt:31-32`) | Unlike a delete, this has no snackbar behind it. A long note typed and lost is gone with no trace | A "discard changes?" dialog when the form is dirty |
 | **LC-03** ✅ #8 | *Fixed.* The picker's visibility was `remember`, not `rememberSaveable`, so a rotation closed it | NFR-06 asks for state intact across a configuration change. Whether an open dialog counts is the open question | One word: `rememberSaveable` |
 | **AX-02** ✅ #9 | *Fixed.* The row checkbox was described as "Mark complete" whatever its state | TalkBack tells a user they can complete a task that is already complete. The checked state is exposed correctly, so the label contradicts it | A second string, chosen on `isCompleted` |
 | **ED-02** ⚠ open | `canSave` is already false for a whitespace-only title, so `SaveTaskUseCase` is never reached and "A title is required." cannot appear | Not a functional break — the rule holds. But a string, a `supportingText` branch and a tested ViewModel path are unreachable dead UI | Either drop the inline error, or let Save through and rely on the use case |
-| **TL-13** ⚠ #13 | `onUndoDelete` clears `message` before it calls `restoreTask`, so a restore that fails leaves a network snackbar and no offer | Undo is the only route back and it is spent whether or not it worked. At 15% this loses a task outright about one undo in seven | Keep the message until the restore succeeds, or re-post the offer on failure |
-| **TL-15** ⚠ #14 | `RestoreTaskUseCase` is `createTask` then `setCompleted`, and nothing makes the pair atomic. The second failing puts a completed task back unfinished | The row is on screen and looks restored. The only signal that it is not is a network snackbar that says nothing about completion | Report a partial restore distinctly, or re-apply the flag on the next refresh |
-| **TL-16** ⚠ #15 | Any `reportFailure` overwrites a pending `TaskDeleted` in the same single `message` slot — a background toggle is enough | TL-09 needs the user to delete twice. This needs them to do nothing at all: one lost dice roll takes the undo away | The same queue TL-09 asks for, or a message type that a failure cannot displace |
-| **TL-19** ⚠ #16 | A save returns to a list still filtered by the query, so a new task whose title does not match is created and invisible | The editor closing is the app's only "saved" signal, and the list then shows no such task — the same picture a failed save paints | Clear the query on return, or say the new task is hidden by the filter |
-| **TL-21** ⚠ #17 | The checkbox renders the cache, which does not move until the write lands, so a second tap during the first write sends "complete" twice | Two taps read as complete-then-undo and leave the task complete. Nothing is reported, and the second tap is simply absorbed | Disable the control while its write is in flight, or track the pending value |
-| **ED-10** ⚠ #18 | Popping the editor clears the ViewModel, cancels `viewModelScope` and with it the in-flight `createTask` | The user tapped Save and left, which reads as saved. Unlike a delete there is no snackbar behind it and no trace afterwards | Complete the save outside the ViewModel's scope, or block the exit while one is in flight |
-| **AX-03** ❌ #12 | The `LazyColumn` has no bottom `contentPadding`, so the last row ends flush with the viewport and the FAB is drawn over its right-hand end. The Delete control is not merely covered — it is absent from the layout dump | The only way to delete the bottom task is to add another one, sort it away or search for it. Reproduced at the default font scale with ten rows, so any list long enough to scroll has one unreachable row | `contentPadding = PaddingValues(bottom = 88.dp)` on the list |
+| **TL-13** ✅ #13 | *Fixed.* `onUndoDelete` cleared `message` before it called `restoreTask`, so a restore that failed left a network snackbar and no offer | Undo is the only route back and it was spent whether or not it worked. At 15% that lost a task outright about one undo in seven | The offer is re-posted when the restore fails, behind the failure that explains it |
+| **TL-15** ✅ #14 | *Fixed, in the reporting rather than the mechanism.* `RestoreTaskUseCase` is still `createTask` then `setCompleted` and the pair is still not atomic — that needs a restore operation on `TaskApi` | The row is on screen and looks restored. The only signal that it was not used to be a network snackbar that said nothing about completion | `RestoreOutcome.CompletionLost` and a sentence that names the flag: "Task restored, but it came back unfinished." |
+| **TL-16** ✅ #15 | *Fixed.* Any `reportFailure` overwrote a pending `TaskDeleted` in the same single `message` slot — a background toggle was enough | TL-09 needed the user to delete twice. This needed them to do nothing at all: one lost dice roll took the undo away | A queue, and the rule that nothing displaces an offer that has not been acted on. The failure is still shown, after it |
+| **TL-19** ✅ #16 | *Fixed, at the second attempt.* A save returned to a list still filtered by the query, so a new task whose title did not match was created and invisible | The editor closing is the app's only "saved" signal, and the list then showed no such task — the same picture a failed save paints | The editor reports the save back through the back stack entry, and `taskListSection` reads it *there*: the first fix read it from a `SavedStateHandle` injected into the ViewModel, which is a different handle, and the device run caught it |
+| **TL-21** ✅ #17 | *Fixed.* The checkbox renders the cache, which does not move until the write lands, so a second tap during the first write sent "complete" twice | Two taps read as complete-then-undo and left the task complete. Nothing was reported, and the second tap was simply absorbed | The row is held for the duration of its write and the control is disabled — the shape `onSave` already used. The second tap still does not toggle back; it no longer looks as though it should |
+| **ED-10** ✅ #18 | *Fixed.* Popping the editor cleared the ViewModel, cancelled `viewModelScope` and with it the in-flight `createTask` | The user tapped Save and left, which reads as saved. Unlike a delete there is no snackbar behind it and no trace afterwards | The write runs on an `@ApplicationScope` coroutine and is only awaited from `viewModelScope` |
+| **AX-03** ✅ #12 | *Fixed.* The `LazyColumn` had no bottom `contentPadding`, so the last row ended flush with the viewport and the FAB was drawn over its right-hand end. The Delete control was not merely covered — it was absent from the layout dump | The only way to delete the bottom task was to add another one, sort it away or search for it. Reproduced at the default font scale with ten rows, so any list long enough to scroll had one unreachable row | `contentPadding = PaddingValues(bottom = 88.dp)` on the list |
 
 TL-08 was not predicted at all. It failed on an assumption its own journey made about how a
 snackbar behaves — and the assumption turned out to be right about snackbars and wrong about this

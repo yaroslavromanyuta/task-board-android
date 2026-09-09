@@ -28,7 +28,15 @@ fun TodoNavHost(
             onAddTask = { navController.navigate(Route.TaskEditor()) },
         )
         taskEditorSection(
-            onDone = navController::navigateUp,
+            // A save is reported back to whatever opened the editor before the pop, because the list
+            // has no other way to know one happened: closing the editor is the app's only "saved"
+            // signal, and a new task hidden by an active search would otherwise land unseen.
+            onDone = {
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set(Route.TaskList.TASK_SAVED_RESULT, true)
+                navController.navigateUp()
+            },
             onBack = navController::navigateUp,
         )
     }

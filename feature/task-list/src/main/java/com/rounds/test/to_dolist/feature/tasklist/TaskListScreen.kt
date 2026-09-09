@@ -2,6 +2,7 @@ package com.rounds.test.to_dolist.feature.tasklist
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -129,13 +130,21 @@ fun TaskListScreen(
                         message = stringResource(R.string.task_list_no_matches, state.query),
                     )
 
-                    else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    // The bottom padding is not cosmetic: without it the last row ends flush with
+                    // the viewport and the FAB is drawn over its trailing control, so the bottom
+                    // task of any list long enough to scroll cannot be deleted (FR-04). 56 dp of
+                    // button, 16 dp of Scaffold margin, and a gap.
+                    else -> LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 88.dp),
+                    ) {
                         items(items = state.visibleTasks, key = { it.id }) { task ->
                             TaskRow(
                                 task = task,
                                 onClick = { onTaskClick(task.id) },
                                 onToggleCompleted = { done -> onToggleCompleted(task.id, done) },
                                 onDelete = { onDelete(task.id) },
+                                isToggling = task.id in state.pendingToggles,
                             )
                         }
                     }
@@ -159,6 +168,10 @@ private fun SnackbarEffect(
     val text = when (message) {
         is TaskListMessage.Failure -> message.error.asMessage()
         is TaskListMessage.TaskDeleted -> stringResource(R.string.task_list_deleted)
+        // Names the field that did not come back. A bare error over a row that visibly arrived
+        // would read as "the restore failed", which is the one thing that did not happen.
+        is TaskListMessage.CompletionNotRestored ->
+            stringResource(R.string.task_list_restored_incomplete)
         null -> null
     }
     val undoLabel = stringResource(R.string.task_list_action_undo)

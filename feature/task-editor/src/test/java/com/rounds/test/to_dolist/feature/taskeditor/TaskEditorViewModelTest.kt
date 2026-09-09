@@ -1,6 +1,7 @@
 package com.rounds.test.to_dolist.feature.taskeditor
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import com.rounds.test.to_dolist.core.testing.FakeTaskRepository
 import com.rounds.test.to_dolist.core.testing.MainDispatcherRule
 import com.rounds.test.to_dolist.core.testing.TestData
@@ -8,6 +9,8 @@ import com.rounds.test.to_dolist.tasks.error.DataError
 import com.rounds.test.to_dolist.tasks.model.TaskPriority
 import com.rounds.test.to_dolist.tasks.usecase.GetTaskUseCase
 import com.rounds.test.to_dolist.tasks.usecase.SaveTaskUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import java.time.Instant
@@ -32,6 +35,9 @@ class TaskEditorViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val repository = FakeTaskRepository()
+
+    /** Shares the rule's scheduler, so `advanceUntilIdle()` drives the application-scoped save too. */
+    private val applicationScope = CoroutineScope(mainDispatcherRule.testDispatcher)
 
     @Test
     fun `create mode starts on an empty form and asks the source for nothing`() = runTest {
@@ -198,6 +204,7 @@ class TaskEditorViewModelTest {
         val repository = FakeTaskRepository(source = listOf(TestData.task(id = "1", dueDate = due)))
         val viewModel = TaskEditorViewModel(
             savedStateHandle = handle(taskId = "1"),
+            applicationScope = applicationScope,
             getTask = GetTaskUseCase(repository),
             saveTask = SaveTaskUseCase(repository),
         )
@@ -285,8 +292,26 @@ class TaskEditorViewModelTest {
 
     private fun handle(taskId: String?) = SavedStateHandle(mapOf("taskId" to taskId))
 
+    /**
+     * The save has to outlive the screen. Popping the editor clears the ViewModel and cancels
+     * `viewModelScope`; when the call lived in that scope it went with it, and the task the user had
+     * already committed to was never created and nothing said so.
+     */
+    @Test
+    fun `a save already in flight completes after the screen is left`() = runTest {
+        val viewModel = createMode()
+        viewModel.onTitleChange("Buy stamps")
+
+        viewModel.onSave()
+        viewModel.viewModelScope.cancel()
+        advanceUntilIdle()
+
+        assertTrue(repository.observeTasks().first().any { it.title == "Buy stamps" })
+    }
+
     private fun viewModel(savedStateHandle: SavedStateHandle) = TaskEditorViewModel(
         savedStateHandle = savedStateHandle,
+        applicationScope = applicationScope,
         getTask = GetTaskUseCase(repository),
         saveTask = SaveTaskUseCase(repository),
     )

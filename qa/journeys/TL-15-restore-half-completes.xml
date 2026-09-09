@@ -1,23 +1,26 @@
-<journey name="TL-15 A restore that fails halfway brings the task back unfinished">
+<journey name="TL-15 A restore that fails halfway says which field it lost">
   <description>
-    KNOWN-DEFECT WATCHLIST. Asserts the current behaviour; whether it is the right behaviour is a
-    product call. See qa/TEST-PLAN.md.
+    REGRESSION GUARD. This journey used to assert the defect: a completed task came back unfinished
+    under a bare "No connection" snackbar that said nothing about the flag, so the failure read as
+    "the restore failed" while the restore had visibly succeeded. Filed as issue #14 and now fixed -
+    not by making the pair atomic, which needs a restore operation the source does not have, but by
+    refusing to hide it.
 
-    RestoreTaskUseCase is two calls, not one: createTask, then setCompleted for a task that was
-    completed. TaskApi has no restore operation and TaskDraft deliberately carries only the editable
-    half of a task, so the flag has to be re-applied afterwards - and nothing makes the pair atomic.
-    When the second call fails, the task is back on the list reading as unfinished, under a network
-    snackbar that says nothing about the flag having been dropped.
+    `RestoreTaskUseCase` is still two calls: `createTask`, then `setCompleted` for a task that was
+    completed. `TaskApi` has no restore operation and `TaskDraft` deliberately carries only the
+    editable half of a task, so the flag has to be re-applied afterwards and the window in which the
+    task exists and is wrong is real. What changed is that the second call failing is now reported as
+    itself - a partial restore - rather than as a failure of the whole thing.
 
     TL-07 covers the pair when both calls succeed. This is the seam between them, and the reason it
-    is a device journey rather than a unit test is that the unit test asserts a reported failure while
-    the user sees a row that quietly changed meaning.
+    is a device journey rather than a unit test is that the unit test asserts an outcome while the
+    user reads a sentence.
 
-    Timing. The dice for a call are rolled at its start, so the broadcast must land after createTask
-    has begun and before setCompleted does. Pinning the latency at 4000 ms opens a four-second window
-    for it. If the create itself fails instead - the failure snackbar appears and "Book dentist" does
-    not come back at all - the broadcast was too early: force-stop, restart and run the journey again
-    rather than recording a failure.
+    Timing. The dice for a call are rolled at its start, so the broadcast must land after `createTask`
+    has begun and before `setCompleted` does. Pinning the latency at 4000 ms opens a four-second
+    window for it. If the create itself fails instead - the failure snackbar appears, "Book dentist"
+    does not come back at all, and the undo offer returns behind it - the broadcast was too early:
+    force-stop, restart and run the journey again rather than recording a failure.
 
     Preconditions:
       adb shell am force-stop com.rounds.test.to_dolist
@@ -30,7 +33,8 @@
     <action>Tap the "Undo" action on that message</action>
     <action>Using adb, break the source one second later, while the restore is still in flight, with `am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 1.0`</action>
     <action>Verify that "Book dentist" is on screen again</action>
-    <action>Verify that "No connection. Check your network and try again." is on screen</action>
+    <action>Verify that "Task restored, but it came back unfinished." is on screen</action>
+    <action>Verify that "No connection. Check your network and try again." is not on screen</action>
     <action>Verify that the restored "Book dentist" row has an unchecked checkbox described as "Mark complete"</action>
     <action>Verify that the restored "Book dentist" title is not struck through</action>
   </actions>

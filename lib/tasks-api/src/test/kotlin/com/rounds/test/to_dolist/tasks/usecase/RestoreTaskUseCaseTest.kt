@@ -9,13 +9,15 @@ import com.rounds.test.to_dolist.tasks.repository.TaskRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
  * "Restore" is two calls, not one, because the source has no restore operation and `TaskDraft` cannot
- * carry `isCompleted`. These tests are what stop that second call being dropped as redundant.
+ * carry `isCompleted`. These tests are what stop that second call being dropped as redundant — and
+ * what pin the third answer the pair can produce: the task is back, and a field of it is not.
  */
 class RestoreTaskUseCaseTest {
 
@@ -31,31 +33,33 @@ class RestoreTaskUseCaseTest {
             priority = TaskPriority.HIGH,
         )
 
-        val restored = restoreTask(deleted).getOrThrow()
+        val outcome = restoreTask(deleted).getOrThrow()
 
-        assertEquals("Book dentist", restored.title)
-        assertEquals("Before Friday", restored.notes)
-        assertEquals(TaskPriority.HIGH, restored.priority)
-        assertTrue(repository.observeTasks().first().any { it.id == restored.id })
+        assertTrue(outcome is RestoreOutcome.Restored)
+        assertEquals("Book dentist", outcome.task.title)
+        assertEquals("Before Friday", outcome.task.notes)
+        assertEquals(TaskPriority.HIGH, outcome.task.priority)
+        assertTrue(repository.observeTasks().first().any { it.id == outcome.task.id })
     }
 
     @Test
     fun `the source assigns a new id, because it never knew the old one came back`() = runTest {
         val deleted = TestData.task(id = "gone")
 
-        val restored = restoreTask(deleted).getOrThrow()
+        val outcome = restoreTask(deleted).getOrThrow()
 
-        assertNotEquals("gone", restored.id)
+        assertNotEquals("gone", outcome.task.id)
     }
 
     @Test
     fun `a completed task comes back completed`() = runTest {
         val deleted = TestData.task(id = "gone", isCompleted = true)
 
-        val restored = restoreTask(deleted).getOrThrow()
+        val outcome = restoreTask(deleted).getOrThrow()
 
-        assertTrue(restored.isCompleted)
-        assertTrue(repository.observeTasks().first().first { it.id == restored.id }.isCompleted)
+        assertTrue(outcome is RestoreOutcome.Restored)
+        assertTrue(outcome.task.isCompleted)
+        assertTrue(repository.observeTasks().first().first { it.id == outcome.task.id }.isCompleted)
     }
 
     @Test
@@ -69,17 +73,24 @@ class RestoreTaskUseCaseTest {
     }
 
     /**
-     * The completion half can fail on its own. The task is back either way, so the caller is told and
-     * can decide; silently returning success would claim a flag that is not set.
+     * The completion half can fail on its own, and the two calls cannot be made atomic without a
+     * restore operation on the source. So the task is back either way — reporting that as a plain
+     * failure would contradict the row the user can see, and would say nothing about which field went
+     * missing. The caller is handed both facts and decides how to word them.
      */
     @Test
-    fun `a failure to re-apply completion is reported`() = runTest {
+    fun `a task whose completion could not be re-applied comes back as a partial restore`() = runTest {
         val restore = RestoreTaskUseCase(SetCompletedAlwaysFails(repository))
 
-        val result = restore(TestData.task(id = "gone", isCompleted = true))
+        val outcome = restore(TestData.task(id = "gone", isCompleted = true)).getOrThrow()
 
-        assertEquals(DataError.Network, (result.exceptionOrNull() as DataException).error)
-        assertEquals(1, repository.observeTasks().first().size)
+        assertEquals(
+            RestoreOutcome.CompletionLost(outcome.task, DataError.Network),
+            outcome,
+        )
+        val stored = repository.observeTasks().first().single()
+        assertEquals(outcome.task.id, stored.id)
+        assertFalse(stored.isCompleted)
     }
 
     private class SetCompletedAlwaysFails(

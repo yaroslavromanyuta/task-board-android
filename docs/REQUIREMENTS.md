@@ -209,11 +209,19 @@ transiently instead. `TaskListUiState` therefore carries two independent things:
 | Field | Meaning | Rendered |
 |---|---|---|
 | `error` | the load failed with nothing cached | full-screen message + Retry (precedence 2 above) |
-| `message` | a failure, or a completed delete, arriving with rows on screen | snackbar over the list |
+| `messages` | failures, completed deletes and partial restores arriving with rows on screen | snackbar over the list, one at a time |
 
-`message` is a sealed type: `Failure(DataError)` is read and dismissed, `TaskDeleted(Task)` carries the
-whole task so Undo can put it back (FR-12). The ViewModel chooses between `error` and `message` by one
-rule — content on screen means transient — so the screen never has to.
+A message is a sealed type: `Failure(DataError)` is read and dismissed, `TaskDeleted(Task)` carries the
+whole task so Undo can put it back (FR-12), and `CompletionNotRestored(DataError)` says that a restore
+re-created the task but could not re-apply its completion flag. The ViewModel chooses between `error`
+and a message by one rule — content on screen means transient — so the screen never has to.
+
+`messages` is a **queue**, and `message` is its head. A single slot meant the last writer won, and the
+writer that lost could be a `TaskDeleted` holding the only copy of a deleted task — so a second delete,
+or any unrelated failure landing while the offer was up, took the task with it (issues #13 and #15).
+The rule is that nothing may displace an offer that has not been acted on: messages are shown in the
+order they were posted, a message equal to one already waiting is dropped rather than queued twice,
+and a failed undo re-posts its offer behind the failure that explains it.
 
 `tasks` is everything the cache holds and `visibleTasks` is what the query and sort left of it. Both
 exist so that "no tasks at all" (`isEmpty`) and "nothing matches what you typed" (`hasNoMatches`) can
@@ -223,6 +231,28 @@ re-queries the source.
 Undo re-creates the task, because `TaskApi` has no restore operation. The restored task therefore has
 a new source-assigned id and appears where a newly created one would; every field the user can see —
 including `isCompleted` — survives, which is what `RestoreTaskUseCase` exists to guarantee.
+
+That guarantee is two calls, and they are not atomic: `createTask` cannot carry `isCompleted`, because
+`TaskDraft` is deliberately the editable half of a task, so the flag is re-applied afterwards. When the
+second call fails the task is back and a field of it is not, which is neither success nor failure —
+`RestoreTaskUseCase` returns a `RestoreOutcome`, and `CompletionLost` is worded as itself rather than
+reported as a failure of a restore the user can see on screen (issue #14). Making the pair atomic would
+need a restore operation on `TaskApi`.
+
+A completion write holds its row for the duration: while one is in flight that task's id is in
+`pendingToggles` and its checkbox is disabled. The control renders the cache, which does not move until
+the write returns, so an ungated second tap read the same stale value and sent the same thing again
+(issue #17).
+
+The query is screen state and survives everything except a save. The editor closing is the app's only
+"saved" signal, so a successful save is reported back to the list destination and clears the query —
+otherwise a new task whose title does not match the live filter is created into a screen that says no
+such task exists (issue #16).
+
+The result travels on `NavBackStackEntry.savedStateHandle` and is read **in the navigation section**,
+not by the ViewModel. A `SavedStateHandle` injected into a Hilt ViewModel is a different handle from
+the entry's own, built from the same registry under a different key, so a value written to one never
+reaches the other. The section collects the flag, hands it to the route and clears it once.
 
 ### Task editor
 
@@ -248,7 +278,12 @@ Three failure fields, because the screen has to do something different with each
 | `saveError` | the save failed while the form is still good | a snackbar over the form; nothing typed is lost (FR-02) |
 
 Success is reported as `isSaved` on the state and acted on by the route, not through a callback handed
-to the ViewModel: the save is asynchronous, and navigation belongs where the composable is.
+to the ViewModel: the save is asynchronous, and navigation belongs where the composable is. A save that
+succeeds is also reported back to the list, which clears its query (see the list state model above).
+
+The write itself runs on an `@ApplicationScope` coroutine and only its *reporting* runs in
+`viewModelScope`. Popping the editor clears the ViewModel and cancels that scope; a write the user has
+already committed to must not go with it (issue #18).
 
 ## 10. Architecture constraints
 

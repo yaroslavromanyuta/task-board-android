@@ -5,6 +5,7 @@ import com.rounds.test.to_dolist.core.testing.FakeTaskRepository
 import com.rounds.test.to_dolist.core.testing.MainDispatcherRule
 import com.rounds.test.to_dolist.core.testing.TestData
 import com.rounds.test.to_dolist.tasks.error.DataError
+import com.rounds.test.to_dolist.tasks.error.DataException
 import com.rounds.test.to_dolist.tasks.model.TaskPriority
 import com.rounds.test.to_dolist.tasks.model.TaskSort
 import com.rounds.test.to_dolist.tasks.repository.TaskRepository
@@ -200,7 +201,7 @@ class TaskListViewModelTest {
     }
 
     @Test
-    fun `a failed undo is reported and the task stays gone`() = runTest {
+    fun `a failed undo is reported and the offer comes back`() = runTest {
         val repository = FakeTaskRepository()
         val viewModel = viewModel(repository)
         advanceUntilIdle()
@@ -213,8 +214,168 @@ class TaskListViewModelTest {
         viewModel.onUndoDelete(message)
         advanceUntilIdle()
 
+        // The failure is read first and the offer waits behind it: the message carries the only copy
+        // of the task, so a restore that failed must not be the end of it.
         assertEquals(TaskListMessage.Failure(DataError.Network), viewModel.uiState.value.message)
         assertEquals(listOf("2", "3"), viewModel.uiState.value.tasks.map { it.id })
+
+        viewModel.onMessageShown()
+
+        assertEquals(message, viewModel.uiState.value.message)
+    }
+
+    @Test
+    fun `the second offer restores the task`() = runTest {
+        val repository = FakeTaskRepository()
+        val viewModel = viewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.onDelete(id = "1")
+        advanceUntilIdle()
+        repository.nextError = DataError.Network
+        viewModel.onUndoDelete(viewModel.uiState.value.message as TaskListMessage.TaskDeleted)
+        advanceUntilIdle()
+        viewModel.onMessageShown()
+
+        viewModel.onUndoDelete(viewModel.uiState.value.message as TaskListMessage.TaskDeleted)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.tasks.any { it.title == "Buy milk" })
+        assertNull(viewModel.uiState.value.message)
+    }
+
+    /**
+     * An undo that re-created the task but could not re-apply its completion flag is not a failure:
+     * the row is back. Reporting it as one describes a restore that visibly happened as one that did
+     * not, and says nothing about the field that was actually lost.
+     */
+    @Test
+    fun `a restore that loses the completion flag says so`() = runTest {
+        val viewModel = viewModel(SetCompletedAlwaysFails(FakeTaskRepository()))
+        advanceUntilIdle()
+
+        viewModel.onDelete(id = "3")
+        advanceUntilIdle()
+        viewModel.onUndoDelete(viewModel.uiState.value.message as TaskListMessage.TaskDeleted)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(TaskListMessage.CompletionNotRestored(DataError.Network), state.message)
+        assertFalse(state.tasks.first { it.title == "Water the plants" }.isCompleted)
+    }
+
+    // --- Messages queue rather than overwrite ----------------------------------------------------
+
+    /**
+     * The deleted task exists only inside its message, so a failure landing during the few seconds an
+     * undo offer is up used to take the task with it - and at a 15% failure rate that needs the user
+     * to do nothing at all.
+     */
+    @Test
+    fun `a failure does not displace a pending undo offer`() = runTest {
+        val repository = FakeTaskRepository()
+        val viewModel = viewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.onDelete(id = "1")
+        advanceUntilIdle()
+        val offer = viewModel.uiState.value.message as TaskListMessage.TaskDeleted
+
+        repository.nextError = DataError.Network
+        viewModel.onToggleCompleted(id = "2", completed = true)
+        advanceUntilIdle()
+
+        assertEquals(offer, viewModel.uiState.value.message)
+
+        viewModel.onMessageShown()
+
+        assertEquals(TaskListMessage.Failure(DataError.Network), viewModel.uiState.value.message)
+    }
+
+    @Test
+    fun `an identical failure is not queued twice`() = runTest {
+        val repository = FakeTaskRepository()
+        val viewModel = viewModel(repository)
+        advanceUntilIdle()
+
+        repository.nextError = DataError.Network
+        viewModel.onRetry()
+        advanceUntilIdle()
+        repository.nextError = DataError.Network
+        viewModel.onRetry()
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(TaskListMessage.Failure(DataError.Network)),
+            viewModel.uiState.value.messages,
+        )
+    }
+
+    // --- A write already in flight ---------------------------------------------------------------
+
+    /**
+     * The checkbox renders the cache, which does not move until the write returns, so a second tap
+     * inside that window read the same stale value and sent the same thing again: two taps, one
+     * meaning. The row is held for the duration and the screen renders its control inert.
+     */
+    @Test
+    fun `a second toggle while the first is in flight is ignored`() = runTest {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleCompleted(id = "1", completed = true)
+        assertTrue("1" in viewModel.uiState.value.pendingToggles)
+
+        viewModel.onToggleCompleted(id = "1", completed = true)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.tasks.first { it.id == "1" }.isCompleted)
+        assertTrue(viewModel.uiState.value.pendingToggles.isEmpty())
+    }
+
+    @Test
+    fun `a toggle that fails still releases the row`() = runTest {
+        val repository = FakeTaskRepository()
+        val viewModel = viewModel(repository)
+        advanceUntilIdle()
+        repository.nextError = DataError.Network
+
+        viewModel.onToggleCompleted(id = "1", completed = true)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.pendingToggles.isEmpty())
+        assertEquals(TaskListMessage.Failure(DataError.Network), viewModel.uiState.value.message)
+    }
+
+    // --- A save made under an active search ------------------------------------------------------
+
+    /**
+     * The editor closing is the only "saved" signal the app has, so a save whose title does not match
+     * the live query used to close onto "No tasks match ..." - the one picture that says the task is
+     * not there, shown straight after the action that created it.
+     */
+    @Test
+    fun `a save clears the query so the new task is visible`() = runTest {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+        viewModel.onQueryChange("invoice")
+        assertTrue(viewModel.uiState.value.hasNoMatches)
+
+        viewModel.onTaskSaved()
+
+        assertEquals("", viewModel.uiState.value.query)
+        assertFalse(viewModel.uiState.value.hasNoMatches)
+    }
+
+    @Test
+    fun `a query typed after a save is left alone`() = runTest {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.onTaskSaved()
+        viewModel.onQueryChange("passport")
+
+        assertEquals("passport", viewModel.uiState.value.query)
     }
 
     // --- FR-10 and FR-11: search and sort --------------------------------------------------------
@@ -294,6 +455,14 @@ class TaskListViewModelTest {
         viewModel.onSortChange(TaskSort.PRIORITY)
 
         assertEquals(listOf("2", "1"), viewModel.uiState.value.visibleTasks.map { it.id })
+    }
+
+    /** Lets the second half of a restore fail on its own, which is how the flag gets lost. */
+    private class SetCompletedAlwaysFails(
+        delegate: TaskRepository,
+    ) : TaskRepository by delegate {
+        override suspend fun setCompleted(id: String, completed: Boolean): Result<Unit> =
+            Result.failure(DataException(DataError.Network))
     }
 
     private fun viewModel(repository: TaskRepository = FakeTaskRepository()) = TaskListViewModel(

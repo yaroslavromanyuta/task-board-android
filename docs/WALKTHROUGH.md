@@ -22,7 +22,7 @@ Left below the cut-line: nothing. The backlog is closed.
 Not built, deliberately: real networking, authentication, push notifications and on-disk persistence,
 all four excluded by the brief.
 
-**Numbers.** Nine modules, 77 unit tests, no `TODO()` anywhere in the source, `./gradlew lint` clean.
+**Numbers.** Nine modules, 86 unit tests, no `TODO()` anywhere in the source, `./gradlew lint` clean.
 
 ## 2. The module graph, and why there is one
 

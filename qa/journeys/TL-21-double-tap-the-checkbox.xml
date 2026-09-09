@@ -1,20 +1,22 @@
-<journey name="TL-21 Two taps on a checkbox during one write both mean complete">
+<journey name="TL-21 A checkbox is inert while its own write is in flight">
   <description>
-    KNOWN-DEFECT WATCHLIST. Asserts the current behaviour; whether it is the right behaviour is a
-    product call. See qa/TEST-PLAN.md.
+    REGRESSION GUARD. This journey used to assert the defect: the checkbox rendered `task.isCompleted`,
+    which is the cache, which does not change until the write returns - so a second tap during the
+    first write computed its value from the same stale `false` and sent "complete" again. Two taps
+    that a user reads as complete-then-undo left the task complete, with nothing to say a tap had been
+    absorbed. Filed as issue #17 and now fixed the way `TaskEditorViewModel.onSave` already handles
+    the same race: the row is held for the duration of its write and the control is disabled.
 
-    The checkbox renders task.isCompleted, which is the cache, which does not change until the write
-    returns. So a second tap during the first write computes its value from the same stale false and
-    sends "complete" again: two taps that a user reads as complete-then-undo leave the task complete,
-    with no error and nothing to say a tap was absorbed.
+    The second tap still does not toggle the row back - the point of the fix is that it no longer
+    looks as though it should. The control is visibly inert while the call is out, which is both the
+    signal the user was missing and what stops the duplicate write.
 
-    Neither tap is optimistic and neither is rejected - the control is live throughout the call, and
-    DefaultTaskRepository.setCompleted re-reads the current fields from the cache, so the second
-    write carries the same flag as the first.
+    Invisible to a unit test at the UI level: a test dispatcher lets the first call complete before
+    the second tap is dispatched, which is exactly the interleaving that does not happen on a device.
+    Pinning the latency at 3000 ms makes the real one reachable by hand.
 
-    Invisible to a unit test: a test dispatcher lets the first call complete before the second tap is
-    dispatched, which is exactly the interleaving that does not happen on a device. Pinning the
-    latency at 3000 ms makes the real one reachable by hand.
+    Reading disabled state: `qa/README.md` records that it lives on the clickable parent rather than
+    on the label, so match the wrapping node.
 
     Preconditions:
       adb shell am force-stop com.rounds.test.to_dolist
@@ -23,11 +25,14 @@
   <actions>
     <action>Verify that the "Renew domain registration" row has an unchecked checkbox</action>
     <action>Tap the checkbox with the content description "Mark complete" on the "Renew domain registration" row</action>
+    <action>Verify, while the write is still in flight, that this checkbox now reports itself disabled</action>
     <action>Immediately tap that same checkbox a second time, within half a second, while the first write is still in flight</action>
-    <action>Wait ten seconds for both writes to finish</action>
+    <action>Wait ten seconds for the write to finish</action>
     <action>Verify that the "Renew domain registration" row has a checked checkbox</action>
     <action>Verify that the "Renew domain registration" title is struck through</action>
     <action>Verify that no error message is on screen</action>
-    <action>Verify that the checkbox on that row is now described as "Mark incomplete"</action>
+    <action>Verify that the checkbox on that row is now described as "Mark incomplete" and is enabled again</action>
+    <action>Tap that checkbox once and wait ten seconds</action>
+    <action>Verify that the row is unchecked again, so the control is only held for the duration of a write</action>
   </actions>
 </journey>

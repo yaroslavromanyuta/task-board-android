@@ -45,6 +45,10 @@ import java.time.temporal.ChronoUnit
  *
  * [now] is a parameter with a sensible default so that previews and tests can pin "today" instead of
  * rendering something different every day.
+ *
+ * [isToggling] disables the checkbox while its write is in flight. The control renders the cache and
+ * the cache does not move until the call returns, so a second tap inside that window would read the
+ * same stale value and mean the same thing as the first - two taps that do not toggle back.
  */
 @Composable
 fun TaskRow(
@@ -53,6 +57,7 @@ fun TaskRow(
     onToggleCompleted: (Boolean) -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
+    isToggling: Boolean = false,
     now: Instant = remember { Instant.now() },
 ) {
     // The label has to name the action the tap performs, or a screen reader announces the
@@ -71,6 +76,7 @@ fun TaskRow(
         Checkbox(
             checked = task.isCompleted,
             onCheckedChange = onToggleCompleted,
+            enabled = !isToggling,
             modifier = Modifier.semantics { contentDescription = toggleLabel },
         )
         Column(
