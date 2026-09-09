@@ -7,6 +7,9 @@
     Priority is exposed only as a content description: PriorityIndicator wraps its label in
     clearAndSetSemantics (core/ui PriorityIndicator.kt:41), so "High" is never row text.
 
+    The checkbox label follows the row's state (issue #9), so "Book dentist" - the one seed row that
+    arrives completed - is the one described as "Mark incomplete".
+
     Preconditions:
       adb shell am force-stop com.rounds.test.to_dolist
       adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
@@ -17,7 +20,7 @@
     <action>Verify that "Book dentist" is on screen</action>
     <action>Verify that "Migrate the analytics pipeline to the new warehouse and validate dashboards" is on screen</action>
     <action>Verify that the four titles appear in that order from top to bottom</action>
-    <action>Verify that exactly four elements with the content description "Mark complete" are on screen</action>
+    <action>Verify that all four rows carry a checkbox: the three unfinished ones described as "Mark complete" and the completed one as "Mark incomplete"</action>
     <action>Verify that exactly four elements with the content description "Delete task" are on screen</action>
     <action>Verify that an element with the content description "High" is on screen</action>
     <action>Verify that an element with the content description "Low" is on screen</action>

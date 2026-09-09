@@ -1,0 +1,2910 @@
+{
+  "run": {
+    "date": "2026-09-08",
+    "suite": "full - confirmation run against the fixed build",
+    "device": {
+      "serial": "RF8M32EDAQD",
+      "model": "Samsung SM-G973F",
+      "android": "12",
+      "api": 31,
+      "resolution": "1080x2280",
+      "density": 420
+    },
+    "build": {
+      "variant": "debug",
+      "branch": "fix/qa-run-defects",
+      "fixes": [
+        "#7 duration = SnackbarDuration.Long",
+        "#8 rememberSaveable for the picker flag",
+        "#9 the toggle label is picked on task.isCompleted"
+      ]
+    },
+    "device_setup": [
+      "adb shell settings put global window_animation_scale 0",
+      "adb shell settings put global transition_animation_scale 0",
+      "adb shell settings put global animator_duration_scale 0",
+      "adb shell settings put system accelerometer_rotation 0"
+    ],
+    "method": "Each journey was reset with `am force-stop` and relaunched per its own preconditions. The screen was read with `adb exec-out uiautomator dump /dev/tty`; taps were resolved from the dump at run time. Colour assertions were checked against screenshots by eye.",
+    "compared_to": "2026-09-08-full-run.json, where TL-08, LC-03 and AX-02 failed. All three pass here. Two journeys, TL-01 and TL-04, were updated alongside the fix for #9: they named the checkbox label, which now follows the row's state."
+  },
+  "totals": {
+    "journeys": 37,
+    "journeys_passed": 37,
+    "journeys_failed": 0,
+    "actions": 323,
+    "actions_passed": 323,
+    "actions_failed": 0,
+    "actions_skipped": 0
+  },
+  "journeys": [
+    {
+      "journey": "AX-01 Every icon-only control carries a description",
+      "id": "AX-01",
+      "file": "qa/journeys/AX-01-icon-content-descriptions.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that an element with the content description \"Add task\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that an element with the content description \"Sort tasks\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that every task row has an element with the content description \"Delete task\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that every task row has a checkbox with a content description",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Type \"e\" into the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Verify that an element with the content description \"Clear search\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the element with the content description \"Clear search\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Tap the \"Renew domain registration\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that an element with the content description \"Back\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "AX-02 The row checkbox announces the action its tap performs",
+      "id": "AX-02",
+      "file": "qa/journeys/AX-02-checkbox-label-static.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that the \"Book dentist\" row has a checked checkbox",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ],
+          "comment": "Regression guard over issue #9. The completed row reported \"Mark incomplete\", the three unfinished rows \"Mark complete\", and the label followed the state when the checkbox was tapped. It failed here on the previous build."
+        },
+        {
+          "action": "Verify that the checkbox on the \"Book dentist\" row is described as \"Mark incomplete\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the checkbox on every unfinished row is described as \"Mark complete\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the checkbox on the \"Book dentist\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the \"Book dentist\" row now has an unchecked checkbox described as \"Mark complete\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "DD-01 Due dates render in human terms and overdue ones stand out",
+      "id": "DD-01",
+      "file": "qa/journeys/DD-01-seed-due-dates.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that the \"Renew domain registration\" row shows \"Due in 3 days\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ],
+          "comment": "Colour checked by eye against a screenshot: the overdue date is rendered distinctly from a future one."
+        },
+        {
+          "action": "Verify that the \"Migrate the analytics pipeline to the new warehouse and validate dashboards\" row shows \"Due yesterday\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Reply to design feedback\" row shows no due date text",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Book dentist\" row shows no due date text",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify from a screenshot that \"Due yesterday\" is rendered in a warning or error colour distinct from \"Due in 3 days\"",
+          "status": "PASSED",
+          "commands": [
+            "adb shell screencap -p /sdcard/<name>.png"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "DD-02 The editor can set, change and clear a due date",
+      "id": "DD-02",
+      "file": "qa/journeys/DD-02-set-change-clear-due-date.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the \"Book dentist\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"No due date\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Set date\" is on screen and \"Clear date\" is not",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap \"Set date\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that a date picker dialog is on screen with \"OK\" and \"Cancel\" buttons",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Select a date in the picker and tap \"OK\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"No due date\" is no longer on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Change date\" is now on screen instead of \"Set date\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Clear date\" is now on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap \"Clear date\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"No due date\" is on screen again",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Set date\" is on screen and \"Clear date\" is not",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "DD-03 Cancelling the date picker leaves the date untouched",
+      "id": "DD-03",
+      "file": "qa/journeys/DD-03-picker-cancel.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the \"Renew domain registration\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"Due in 3 days\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap \"Change date\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that a date picker dialog is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Select a different date in the picker and tap \"Cancel\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the date picker dialog is no longer on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Due in 3 days\" is still on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"No due date\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the element with the content description \"Back\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the \"Renew domain registration\" row still shows \"Due in 3 days\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "DD-04 The relative wording stops at seven days",
+      "id": "DD-04",
+      "file": "qa/journeys/DD-04-relative-boundary.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the \"Book dentist\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Tap \"Set date\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Select the date exactly seven days from today and tap \"OK\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the due date reads \"Due in 7 days\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap \"Change date\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Select the date exactly eight days from today and tap \"OK\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the due date no longer counts days and instead shows a calendar date, beginning with \"Due \"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the \"Save\" button",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the \"Book dentist\" row on the list shows that same calendar date",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "ED-01 The create form opens empty with Save disabled",
+      "id": "ED-01",
+      "file": "qa/journeys/ED-01-create-defaults-and-save-gate.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the element with the content description \"Add task\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the title \"New task\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Edit task\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Title\" field is empty",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Notes (optional)\" field is empty",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Medium\" priority chip is selected and that \"Low\" and \"High\" are not",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"No due date\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Save\" button is disabled",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Type \"Buy milk\" into the \"Title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Verify that the \"Save\" button is now enabled",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the \"Save\" button",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the app returns to the \"Tasks\" screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Buy milk\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "ED-02 A whitespace-only title never reaches the validation error",
+      "id": "ED-02",
+      "file": "qa/journeys/ED-02-whitespace-title-gate.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the element with the content description \"Add task\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ],
+          "comment": "PASSED means the inline error is confirmed unreachable through the UI. Still open."
+        },
+        {
+          "action": "Type three spaces into the \"Title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Verify that the \"Save\" button is disabled",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"A title is required.\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Type \"x\" into the \"Title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Verify that the \"Save\" button is enabled",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Delete the \"x\" from the \"Title\" field, leaving only the spaces",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Verify that the \"Save\" button is disabled again",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"A title is required.\" is still not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "ED-03 Titles are trimmed and empty notes are dropped",
+      "id": "ED-03",
+      "file": "qa/journeys/ED-03-trimming.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the element with the content description \"Add task\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Type \" Buy milk \" into the \"Title\" field, with leading and trailing spaces",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Type three spaces into the \"Notes (optional)\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Tap the \"Save\" button",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the app returns to the \"Tasks\" screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that a row reading exactly \"Buy milk\", with no leading or trailing spaces, is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the \"Buy milk\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the title \"Edit task\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Title\" field contains exactly \"Buy milk\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Notes (optional)\" field is empty",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "ED-04 Opening a task seeds the form and an edit reaches the list",
+      "id": "ED-04",
+      "file": "qa/journeys/ED-04-edit-round-trip.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the \"Renew domain registration\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the title \"Edit task\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Title\" field contains \"Renew domain registration\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Notes (optional)\" field contains \"Expires end of month\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"High\" priority chip is selected",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Due in 3 days\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Replace the contents of the \"Title\" field with \"Renew the domain\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Tap the \"Low\" priority chip",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Tap the \"Save\" button",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the app returns to the \"Tasks\" screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew the domain\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Renew the domain\" row has an element with the content description \"Low\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew the domain\" is still the first row in the list",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "ED-05 Leaving the editor discards an unsaved edit without asking",
+      "id": "ED-05",
+      "file": "qa/journeys/ED-05-back-discards-silently.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the \"Reply to design feedback\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ],
+          "comment": "PASSED means the silent discard is confirmed. Still open."
+        },
+        {
+          "action": "Verify that the title \"Edit task\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Replace the contents of the \"Title\" field with \"Reply to the design review\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Type \"Due before the standup\" into the \"Notes (optional)\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Tap the element with the content description \"Back\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that no confirmation dialog was shown",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the app returns to the \"Tasks\" screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Reply to design feedback\" is on screen unchanged",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Reply to the design review\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "ED-06 A failed save keeps the form and does not navigate",
+      "id": "ED-06",
+      "file": "qa/journeys/ED-06-save-failure-keeps-form.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0",
+        "# open the editor and fill it in first, then break the source before tapping Save",
+        "adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 1.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the element with the content description \"Add task\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Type \"Pay the invoice\" into the \"Title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Type \"Before Friday\" into the \"Notes (optional)\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Tap the \"High\" priority chip",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Tap the \"Save\" button",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"No connection. Check your network and try again.\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the title \"New task\" is still on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Title\" field still contains \"Pay the invoice\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Notes (optional)\" field still contains \"Before Friday\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"High\" priority chip is still selected",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "ED-07 A failed edit-mode load replaces the form and retries",
+      "id": "ED-07",
+      "file": "qa/journeys/ED-07-edit-load-failure-and-retry.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0",
+        "# wait for the list, then break the source before opening a row",
+        "adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 1.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the \"Renew domain registration\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the title \"Edit task\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"No connection. Check your network and try again.\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that a \"Retry\" button is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that no \"Title\" field is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that an element with the content description \"Back\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the element with the content description \"Back\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the app returns to the \"Tasks\" screen with its four rows still listed",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "LC-01 Rotating the list keeps its query and sort",
+      "id": "LC-01",
+      "file": "qa/journeys/LC-01-rotate-list.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell settings put system accelerometer_rotation 0",
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the element with the content description \"Sort tasks\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Tap \"Priority\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Tap the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Type \"e\" into the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is the first row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Using adb, rotate the device to landscape",
+          "status": "PASSED",
+          "commands": [
+            "adb shell settings put system user_rotation 1",
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Search by title\" field still contains \"e\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is still the first row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that no \"Loading\" element and no \"Retry\" button are on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Using adb, rotate the device back to portrait",
+          "status": "PASSED",
+          "commands": [
+            "adb shell settings put system user_rotation 1",
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Search by title\" field still contains \"e\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is still the first row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "LC-02 Rotating the editor keeps a half-filled form",
+      "id": "LC-02",
+      "file": "qa/journeys/LC-02-rotate-editor-form.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell settings put system accelerometer_rotation 0",
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the element with the content description \"Add task\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Type \"Half a thought\" into the \"Title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Type \"Started but not finished\" into the \"Notes (optional)\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Tap the \"High\" priority chip",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Using adb, rotate the device to landscape",
+          "status": "PASSED",
+          "commands": [
+            "adb shell settings put system user_rotation 1",
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the title \"New task\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Title\" field still contains \"Half a thought\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Notes (optional)\" field still contains \"Started but not finished\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"High\" priority chip is still selected",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Using adb, rotate the device back to portrait",
+          "status": "PASSED",
+          "commands": [
+            "adb shell settings put system user_rotation 1",
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Title\" field still contains \"Half a thought\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"High\" priority chip is still selected",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "LC-03 The date picker survives a rotation",
+      "id": "LC-03",
+      "file": "qa/journeys/LC-03-rotate-with-picker-open.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell settings put system accelerometer_rotation 0",
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the \"Book dentist\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ],
+          "comment": "Regression guard over issue #8. The picker survived portrait -> landscape -> portrait with the month and highlighted date intact, and Cancel still dismissed it. It failed here on the previous build."
+        },
+        {
+          "action": "Verify that \"No due date\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap \"Set date\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that a date picker dialog is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Using adb, rotate the device to landscape",
+          "status": "PASSED",
+          "commands": [
+            "adb shell settings put system user_rotation 1",
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the date picker dialog is still on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Using adb, rotate the device back to portrait",
+          "status": "PASSED",
+          "commands": [
+            "adb shell settings put system user_rotation 1",
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the date picker dialog is still on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap \"Cancel\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the date picker dialog is dismissed and \"No due date\" is still shown",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "LC-04 A half-typed form survives process death",
+      "id": "LC-04",
+      "file": "qa/journeys/LC-04-process-death-restores-form.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the element with the content description \"Add task\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Type \"Survives the reaper\" into the \"Title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Type \"Typed but never saved\" into the \"Notes (optional)\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Tap the \"High\" priority chip",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Press the Home button",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Using adb, kill the app process with `am kill com.rounds.test.to_dolist`",
+          "status": "PASSED",
+          "commands": [
+            "adb shell input keyevent KEYCODE_HOME",
+            "adb shell am kill com.rounds.test.to_dolist",
+            "adb shell am start -n com.rounds.test.to_dolist/.MainActivity"
+          ]
+        },
+        {
+          "action": "Reopen the app from the recents list",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the title \"New task\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Title\" field still contains \"Survives the reaper\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Notes (optional)\" field still contains \"Typed but never saved\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"High\" priority chip is still selected",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "LC-05 A cold start returns to the four seed rows",
+      "id": "LC-05",
+      "file": "qa/journeys/LC-05-cold-start-drops-created-task.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the element with the content description \"Add task\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ],
+          "comment": "Confirms deviation D-2 rather than a defect, and confirms the suite's reset protocol."
+        },
+        {
+          "action": "Type \"Written on water\" into the \"Title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Tap the \"Save\" button",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"Written on water\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the element with the content description \"Sort tasks\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Tap \"Priority\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Using adb, force-stop the app and launch it again with --es qa_failure_rate 0.0",
+          "status": "PASSED",
+          "commands": [
+            "adb shell am force-stop com.rounds.test.to_dolist",
+            "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0",
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Written on water\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is the first row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that exactly four elements with the content description \"Delete task\" are on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Search by title\" field is empty",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "ST-01 The first load shows a loading state",
+      "id": "ST-01",
+      "file": "qa/journeys/ST-01-loading-first-launch.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0 --es qa_latency_ms 30000"
+      ],
+      "results": [
+        {
+          "action": "Verify that an element with the content description \"Loading\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the title \"Tasks\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"No connection. Check your network and try again.\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Retry\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Search by title\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "ST-02 A first load that fails becomes the screen",
+      "id": "ST-02",
+      "file": "qa/journeys/ST-02-error-state-nothing-cached.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 1.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that \"No connection. Check your network and try again.\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that a \"Retry\" button is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that an element with the content description \"Add task\" is still on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Search by title\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that no element with the content description \"Sort tasks\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "ST-03 Retry recovers from the error screen",
+      "id": "ST-03",
+      "file": "qa/journeys/ST-03-retry-recovers.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 1.0",
+        "# wait for the error screen, then heal the source",
+        "adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that \"No connection. Check your network and try again.\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the \"Retry\" button",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"No connection. Check your network and try again.\" is no longer on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Retry\" is no longer on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "ST-04 A failure over a loaded list does not blank it",
+      "id": "ST-04",
+      "file": "qa/journeys/ST-04-failure-over-loaded-list.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0",
+        "# wait for the four seed rows, then break the source",
+        "adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 1.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that \"Renew domain registration\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ],
+          "comment": "The failure snackbar is SnackbarDuration.Short, so the screen must be read within about a second of the tap."
+        },
+        {
+          "action": "Tap the checkbox with the content description \"Mark complete\" on the \"Reply to design feedback\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"No connection. Check your network and try again.\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is still on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Reply to design feedback\" is still on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Retry\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "ST-05 An emptied list shows the empty state and hides its own controls",
+      "id": "ST-05",
+      "file": "qa/journeys/ST-05-empty-state.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that \"Renew domain registration\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the topmost element with the content description \"Delete task\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Tap the topmost element with the content description \"Delete task\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Tap the topmost element with the content description \"Delete task\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Tap the topmost element with the content description \"Delete task\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"No tasks yet. Tap + to add one.\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that no element with the content description \"Delete task\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Search by title\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that no element with the content description \"Sort tasks\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that an element with the content description \"Add task\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "ST-06 No search matches is a different sentence from no tasks",
+      "id": "ST-06",
+      "file": "qa/journeys/ST-06-no-matches-copy.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that \"Renew domain registration\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Type \"zzz\" into the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Verify that the text “No tasks match “zzz”.” is on screen, with typographic quotation marks around zzz",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"No tasks yet. Tap + to add one.\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the element with the content description \"Clear search\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is on screen again",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TH-01 Dark mode keeps the priority colours apart",
+      "id": "TH-01",
+      "file": "qa/journeys/TH-01-dark-mode-priority-colours.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell cmd uimode night yes",
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0",
+        "adb shell cmd uimode night no"
+      ],
+      "results": [
+        {
+          "action": "Verify from a screenshot that the app is rendered on a dark background",
+          "status": "PASSED",
+          "commands": [
+            "adb shell screencap -p /sdcard/<name>.png"
+          ],
+          "comment": "Checked by eye against screenshots of the list and the editor in dark mode: three distinct priority colours, the overdue date distinct, every title legible, and the selected chip distinguishable."
+        },
+        {
+          "action": "Verify that elements with the content descriptions \"High\", \"Medium\" and \"Low\" are all on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify from a screenshot that the priority indicators for High, Medium and Low are three visibly different colours",
+          "status": "PASSED",
+          "commands": [
+            "adb shell screencap -p /sdcard/<name>.png"
+          ]
+        },
+        {
+          "action": "Verify from a screenshot that \"Due yesterday\" is rendered in a colour distinct from \"Due in 3 days\"",
+          "status": "PASSED",
+          "commands": [
+            "adb shell screencap -p /sdcard/<name>.png"
+          ]
+        },
+        {
+          "action": "Verify from a screenshot that every task title is legible against the dark background",
+          "status": "PASSED",
+          "commands": [
+            "adb shell screencap -p /sdcard/<name>.png"
+          ]
+        },
+        {
+          "action": "Tap the element with the content description \"Add task\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify from a screenshot that the priority chips are legible and that the selected chip is distinguishable from the unselected ones",
+          "status": "PASSED",
+          "commands": [
+            "adb shell screencap -p /sdcard/<name>.png"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TL-01 The four seed rows render with title, priority and a complete control",
+      "id": "TL-01",
+      "file": "qa/journeys/TL-01-seed-rows-render.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that \"Renew domain registration\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ],
+          "comment": "Updated alongside the fix for issue #9: the checkbox label now follows the row's state, so this journey counts three \"Mark complete\" and one \"Mark incomplete\" rather than four of the former."
+        },
+        {
+          "action": "Verify that \"Reply to design feedback\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Book dentist\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Migrate the analytics pipeline to the new warehouse and validate dashboards\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the four titles appear in that order from top to bottom",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that all four rows carry a checkbox: the three unfinished ones described as \"Mark complete\" and the completed one as \"Mark incomplete\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that exactly four elements with the content description \"Delete task\" are on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that an element with the content description \"High\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that an element with the content description \"Low\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that exactly two elements with the content description \"Medium\" are on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TL-02 A long title does not break the row layout",
+      "id": "TL-02",
+      "file": "qa/journeys/TL-02-long-title-layout.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that \"Migrate the analytics pipeline to the new warehouse and validate dashboards\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the fourth row has a checkbox with the content description \"Mark complete\" and that it is fully within the screen bounds",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the fourth row has an element with the content description \"Delete task\" and that it is fully within the screen bounds",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the fourth row has an element with the content description \"Medium\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the fourth row shows \"Due yesterday\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the fourth row does not overlap the row above it",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TL-03 Completing a task marks it and survives a refresh",
+      "id": "TL-03",
+      "file": "qa/journeys/TL-03-toggle-complete.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that the \"Renew domain registration\" row has an unchecked checkbox",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the checkbox with the content description \"Mark complete\" on the \"Renew domain registration\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the \"Renew domain registration\" row now has a checked checkbox",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Renew domain registration\" title is struck through",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is still in the first position in the list",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TL-04 Un-completing a task clears the strikethrough",
+      "id": "TL-04",
+      "file": "qa/journeys/TL-04-toggle-incomplete.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that the \"Book dentist\" row has a checked checkbox",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ],
+          "comment": "Updated alongside the fix for issue #9: \"Book dentist\" arrives completed, so its checkbox is now described as \"Mark incomplete\"."
+        },
+        {
+          "action": "Verify that the \"Book dentist\" title is struck through",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the checkbox with the content description \"Mark incomplete\" on the \"Book dentist\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that the \"Book dentist\" row now has an unchecked checkbox",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Book dentist\" title is not struck through",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Book dentist\" row still has an element with the content description \"Low\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TL-05 Deleting a task removes it and announces it",
+      "id": "TL-05",
+      "file": "qa/journeys/TL-05-delete-row.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that \"Book dentist\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the element with the content description \"Delete task\" on the \"Book dentist\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"Book dentist\" is no longer in the list",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that a message reading \"Task deleted\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that an \"Undo\" action is offered next to that message",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that exactly three elements with the content description \"Delete task\" remain on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TL-06 Undo restores the task, at the bottom, with a new id",
+      "id": "TL-06",
+      "file": "qa/journeys/TL-06-undo-restores-at-bottom.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that \"Renew domain registration\" is the first row in the list",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the element with the content description \"Delete task\" on the \"Renew domain registration\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that a message reading \"Task deleted\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the \"Undo\" action on that message",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is on screen again",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is now the last row in the list, below \"Migrate the analytics pipeline to the new warehouse and validate dashboards\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the restored row still has an element with the content description \"High\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the restored row still shows \"Due in 3 days\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that four elements with the content description \"Delete task\" are on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TL-07 Undoing a completed task brings it back completed",
+      "id": "TL-07",
+      "file": "qa/journeys/TL-07-undo-completed-task.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Verify that the \"Book dentist\" row has a checked checkbox",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the element with the content description \"Delete task\" on the \"Book dentist\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that a message reading \"Task deleted\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the \"Undo\" action on that message",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"Book dentist\" is on screen again",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the restored \"Book dentist\" row has a checked checkbox",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the restored \"Book dentist\" title is struck through",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the restored \"Book dentist\" row still has an element with the content description \"Low\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TL-08 The undo offer expires and the task stays deleted",
+      "id": "TL-08",
+      "file": "qa/journeys/TL-08-snackbar-timeout-keeps-delete.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the element with the content description \"Delete task\" on the \"Book dentist\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ],
+          "comment": "Regression guard over issue #7. The snackbar cleared itself after about ten seconds (SnackbarDuration.Long). It failed here on the previous build."
+        },
+        {
+          "action": "Verify that a message reading \"Task deleted\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Wait for that message to disappear on its own without tapping \"Undo\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty   # polled every second for 30 s"
+          ]
+        },
+        {
+          "action": "Verify that \"Task deleted\" is no longer on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Undo\" is no longer on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Book dentist\" is not in the list",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that exactly three elements with the content description \"Delete task\" are on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TL-09 A second delete replaces the first undo offer",
+      "id": "TL-09",
+      "file": "qa/journeys/TL-09-two-deletes-drop-first-undo.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the element with the content description \"Delete task\" on the \"Renew domain registration\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ],
+          "comment": "PASSED means the limitation is confirmed and still open: the first task is unrecoverable once a second delete replaces the message."
+        },
+        {
+          "action": "Verify that a message reading \"Task deleted\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Immediately tap the element with the content description \"Delete task\" on the \"Reply to design feedback\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that a message reading \"Task deleted\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the \"Undo\" action on that message",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"Reply to design feedback\" is on screen again",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is not on screen and is offered no further way back",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TL-10 Undo under an active search restores outside the filter",
+      "id": "TL-10",
+      "file": "qa/journeys/TL-10-delete-under-active-search.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ],
+          "comment": "The soft keyboard has to be dismissed before tapping the snackbar, or the tap lands on a key."
+        },
+        {
+          "action": "Type \"e\" into the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Book dentist\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the element with the content description \"Delete task\" on the \"Book dentist\" row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"Book dentist\" is no longer on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Search by title\" field still contains \"e\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the \"Undo\" action on the \"Task deleted\" message",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"Book dentist\" is on screen again",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that the \"Search by title\" field still contains \"e\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TL-11 Search matches titles only, case-insensitively",
+      "id": "TL-11",
+      "file": "qa/journeys/TL-11-search-titles-only.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Type \"RENEW\" into the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Book dentist\" is not on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the element with the content description \"Clear search\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Tap the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Type \"Expires\" into the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Verify that no task rows are on screen and a no-matches message naming \"Expires\" is shown instead",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    },
+    {
+      "journey": "TL-12 Sorting reorders the list and composes with search",
+      "id": "TL-12",
+      "file": "qa/journeys/TL-12-sort-orders.xml",
+      "status": "PASSED",
+      "preconditions": [
+        "adb shell am force-stop com.rounds.test.to_dolist",
+        "adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0"
+      ],
+      "results": [
+        {
+          "action": "Tap the element with the content description \"Sort tasks\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"Default order\", \"Priority\" and \"Unfinished first\" are all on screen",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap \"Priority\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is the first row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Book dentist\" is the last row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Reply to design feedback\" appears above \"Migrate the analytics pipeline to the new warehouse and validate dashboards\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the element with the content description \"Sort tasks\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Tap \"Unfinished first\"",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Verify that \"Book dentist\" is the last row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Verify that \"Renew domain registration\" is the first row",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        },
+        {
+          "action": "Tap the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time"
+          ]
+        },
+        {
+          "action": "Type \"e\" into the \"Search by title\" field",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty",
+            "adb shell input tap <x> <y>   # coordinates resolved from the dump at run time",
+            "adb shell input text <value>"
+          ]
+        },
+        {
+          "action": "Verify that \"Book dentist\" is still the last row of the filtered list",
+          "status": "PASSED",
+          "commands": [
+            "adb exec-out uiautomator dump /dev/tty"
+          ]
+        }
+      ]
+    }
+  ]
+}

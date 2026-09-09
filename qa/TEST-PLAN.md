@@ -125,7 +125,7 @@ touches both screens, both failure channels, navigation and a configuration chan
 ST-01  ST-04  TL-01  TL-05  TL-06  ED-01  ED-04  LC-01
 ```
 
-**Full — all 37.** Force-stop between each one. All 37 pass on the current build.
+**Full — all 37.** Force-stop between each one. All 37 pass on the current build, confirmed by a second full run after the fixes.
 
 ⚠ marks a journey that asserts behaviour someone still has to rule on; 🔧 marks one that was failing and is now a regression guard over a fix.
 
@@ -198,6 +198,22 @@ The snackbar now clears after about ten seconds — `SnackbarDuration.Long`, mea
 
 `./gradlew test lint` stayed green: 77 unit tests, no lint errors. None of the three fixes was
 visible to a unit test, which is the point.
+
+### 2026-09-08 — full suite, confirmation run against the fixed build
+
+Same device. Results in
+[`results/2026-09-08-full-run-after-fixes.json`](results/2026-09-08-full-run-after-fixes.json).
+
+**All 37 journeys passed. 323 actions, none failed, none skipped.** TL-08, LC-03 and AX-02 — the
+three that failed before — pass as regression guards.
+
+The run also turned up something the fixes themselves had missed. Fixing #9 changed a string the
+suite asserts: **TL-01** counted four checkboxes described "Mark complete", and **TL-04** tapped one
+by that name on the row that arrives completed. Both now name "Mark incomplete" where the row is
+done. Nothing was wrong with the app; the suite had encoded the old label in two places, and a
+re-run is the only thing that would have said so.
+
+Everything else passed unchanged.
 
 ## Known-defect watchlist
 
