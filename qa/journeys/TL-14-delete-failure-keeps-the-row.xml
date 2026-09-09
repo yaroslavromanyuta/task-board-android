@@ -1,0 +1,30 @@
+<journey name="TL-14 A delete that fails keeps the row and offers no undo">
+  <description>
+    The other half of TL-05. onDelete posts TaskDeleted only from its onSuccess branch, so a failed
+    delete must produce a failure snackbar and nothing else - no "Task deleted", no Undo offer for a
+    task that was never removed, and no row missing from the list.
+
+    The pairing that would be wrong is an optimistic removal. DefaultTaskRepository writes to the API
+    first and touches the cache only once the call succeeds, and this is that rule rendered at the
+    delete seam, where a user would notice it as a row that vanishes and comes back.
+
+    The failure snackbar is SnackbarDuration.Short - about four seconds - so start the dump within a
+    second of the tap.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+      # wait for the four seed rows, then break the source
+      adb shell am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 1.0
+  </description>
+  <actions>
+    <action>Verify that "Book dentist" is on screen</action>
+    <action>Tap the element with the content description "Delete task" on the "Book dentist" row</action>
+    <action>Verify that "No connection. Check your network and try again." is on screen</action>
+    <action>Verify that no message reading "Task deleted" is on screen</action>
+    <action>Verify that no "Undo" action is on screen</action>
+    <action>Verify that "Book dentist" is still on screen</action>
+    <action>Verify that exactly four elements with the content description "Delete task" are on screen</action>
+    <action>Verify that "Retry" is not on screen</action>
+  </actions>
+</journey>

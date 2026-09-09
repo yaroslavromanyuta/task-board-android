@@ -1,0 +1,46 @@
+<journey name="AX-03 The list and the form stay usable at 200% font scale">
+  <description>
+    AX-01 checks that the descriptions exist. This checks that the screen is still operable for the
+    user who needs them: at 200% every row grows to two lines, and every control has to stay reachable
+    rather than pushed off the edge or under a neighbour.
+
+    It is also the only journey that ever scrolls. FR-01 asks for a scrollable list and the four seed
+    rows never fill a screen — not even at 200%, which was measured: on a 1080x2280 device all four
+    still fit. So the journey creates two rows of its own to overflow the viewport, which is cheaper
+    than the fifty-row scale journey `TEST-PLAN.md` still lists as future work, and enough to prove
+    the list scrolls and keeps its controls when it does.
+
+    The editor half covers the same risk on a Column that already has verticalScroll: the Save button
+    lives in the app bar, and a doubled font must not push it into the Back control or off the bar.
+
+    Set the scale before launching — a running app is recreated by the change, which is TH-02's
+    scenario, not this one. Reset it afterwards.
+
+    Preconditions:
+      adb shell settings put system font_scale 2.0
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+      # afterwards
+      adb shell settings put system font_scale 1.0
+  </description>
+  <actions>
+    <action>Verify that "Renew domain registration" is on screen</action>
+    <action>Verify that the checkbox with the content description "Mark complete" on that row is fully within the screen bounds</action>
+    <action>Verify that the element with the content description "Delete task" on that row is fully within the screen bounds</action>
+    <action>Verify that the "Renew domain registration" row does not overlap the "Search by title" field above it</action>
+    <action>Verify that "Migrate the analytics pipeline to the new warehouse and validate dashboards" is truncated to at most two lines and does not overlap the row above it</action>
+    <action>Verify that the fourth row shows "Due yesterday" and an element with the content description "Medium"</action>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Verify that the "Title" and "Notes (optional)" labels are on screen and not truncated</action>
+    <action>Verify that the "Save" button is on screen and does not overlap the element with the content description "Back"</action>
+    <action>Verify that the "Low", "Medium" and "High" priority chips are all on screen and none is clipped by the screen edge</action>
+    <action>Verify that "No due date" and "Set date" are both on screen</action>
+    <action>Type "Pad the list one" into the "Title" field and tap the "Save" button</action>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Type "Pad the list two" into the "Title" field and tap the "Save" button</action>
+    <action>Verify that "Pad the list two" is not visible on screen, because six rows at this scale no longer fit</action>
+    <action>Scroll the list to the bottom</action>
+    <action>Verify that "Pad the list two" is now on screen</action>
+    <action>Verify that the bottom row still has an element with the content description "Delete task" fully within the screen bounds</action>
+  </actions>
+</journey>

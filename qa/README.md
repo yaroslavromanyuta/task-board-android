@@ -1,7 +1,8 @@
 # QA journey suite
 
-Thirty-seven end-to-end scenarios for Task Board, written in the XML journey format and run against
-a real device or emulator through the `android` CLI.
+Fifty-four end-to-end scenarios for Task Board, written in the XML journey format and run against a
+real device or emulator through the `android` CLI. Seventeen were added by the review of 2026-09-09
+and run the same day; `TEST-PLAN.md` marks those 🆕 and records which one fails.
 
 They exist because the 77 unit tests in this repo assert ViewModel *state* and never render a pixel.
 Nothing below the ViewModel boundary — the §9 precedence table as it actually draws, real
@@ -35,7 +36,8 @@ performed is a failure, not a prompt to improvise.
 2. **Device-level steps are prefixed "Using adb,".** Rotation, process kill and cold restart are
    device interactions rather than screen interactions, and a handful of scenarios genuinely cannot
    be expressed without them. They are marked so the evaluator performs them rather than rejecting
-   the file. There are seven such steps in the whole suite.
+   the file. There are nineteen such steps in the whole suite, and about half of them break or mend
+   the source in the middle of a journey rather than before it starts.
 
 ## Prerequisites
 
@@ -129,6 +131,12 @@ resets both knobs to their defaults. The app writes nothing to disk, so `pm clea
 **Run journeys one at a time, force-stopping between them.** Each one assumes the four seed rows and
 nothing else.
 
+**`am kill` resets the knobs as well as the store.** The store, the id counter and both knobs live in
+the same `FakeTaskApi` singleton, so a process that comes back after `am kill` has `failureRate` at
+its 0.15 default however the app was launched — and ids start again from `task-1`, which is what
+ED-09 exploits. Any journey that touches the source after a kill has to set the rate again by
+broadcast; ED-09 and LC-06 both do.
+
 ## The seed data every journey is written against
 
 | # | Title | Notes | Priority | Completed | Due |
@@ -174,9 +182,11 @@ way.
 
 **Snackbars are short, and the two kinds differ.** A failure snackbar is
 `SnackbarDuration.Short` — about four seconds — so the dump has to *start* within roughly a second of
-the action that caused it. The delete snackbar is `Indefinite` and never leaves on its own (that is
-TL-08's finding, not a feature). Do not use `android layout` for either: at 20 s a call, it will miss
-the first and mislead you about the second.
+the action that caused it. The delete snackbar is `SnackbarDuration.Long`, about ten seconds, since
+the fix for TL-08's finding; before that fix it was `Indefinite` and never left on its own. Ten
+seconds is also the whole budget for any journey that has to break the source *between* a delete and
+its Undo — TL-13 and TL-15 both do. Do not use `android layout` for either kind: at 20 s a call it
+misses the first and expires the second while you read it.
 
 **The soft keyboard covers the snackbar.** After typing into the search field or a form, the IME sits
 over the bottom of the screen where the snackbar renders. A tap aimed at "Undo" lands on a key
@@ -197,8 +207,10 @@ carrying the text. All three of these were confirmed on the device:
 - **Disabled** sits on the clickable parent, not on the label. The Save button's `TextView` reads
   `enabled="true"` even when Save is greyed out; the `android.view.View` wrapping it is the node
   that reads `enabled="false"`. Match the clickable ancestor by bounds.
-- **A selected priority chip reports `checked="true"`**, not `selected="true"`. `FilterChip` maps
-  onto a checkable node; `selected` is always false and means nothing here.
+- **A selected priority chip reports `checked="true"` on the node *wrapping* the chip.** `FilterChip`
+  maps onto a checkable node; `selected` is always false and means nothing here. On the SM-G973F the
+  `CheckBox` node itself reads `checked="false"` and its parent `View` — the one whose bounds cover
+  the whole chip — reads `true`. Match the parent by bounds.
 - **A text field's contents are on the `EditText` node**, which has an empty `content-desc`; its
   label ("Title", "Notes (optional)") is a separate sibling node. Do not expect the label and the
   value on one node.

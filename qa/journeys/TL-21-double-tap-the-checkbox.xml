@@ -1,0 +1,33 @@
+<journey name="TL-21 Two taps on a checkbox during one write both mean complete">
+  <description>
+    KNOWN-DEFECT WATCHLIST. Asserts the current behaviour; whether it is the right behaviour is a
+    product call. See qa/TEST-PLAN.md.
+
+    The checkbox renders task.isCompleted, which is the cache, which does not change until the write
+    returns. So a second tap during the first write computes its value from the same stale false and
+    sends "complete" again: two taps that a user reads as complete-then-undo leave the task complete,
+    with no error and nothing to say a tap was absorbed.
+
+    Neither tap is optimistic and neither is rejected - the control is live throughout the call, and
+    DefaultTaskRepository.setCompleted re-reads the current fields from the cache, so the second
+    write carries the same flag as the first.
+
+    Invisible to a unit test: a test dispatcher lets the first call complete before the second tap is
+    dispatched, which is exactly the interleaving that does not happen on a device. Pinning the
+    latency at 3000 ms makes the real one reachable by hand.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0 --es qa_latency_ms 3000
+  </description>
+  <actions>
+    <action>Verify that the "Renew domain registration" row has an unchecked checkbox</action>
+    <action>Tap the checkbox with the content description "Mark complete" on the "Renew domain registration" row</action>
+    <action>Immediately tap that same checkbox a second time, within half a second, while the first write is still in flight</action>
+    <action>Wait ten seconds for both writes to finish</action>
+    <action>Verify that the "Renew domain registration" row has a checked checkbox</action>
+    <action>Verify that the "Renew domain registration" title is struck through</action>
+    <action>Verify that no error message is on screen</action>
+    <action>Verify that the checkbox on that row is now described as "Mark incomplete"</action>
+  </actions>
+</journey>

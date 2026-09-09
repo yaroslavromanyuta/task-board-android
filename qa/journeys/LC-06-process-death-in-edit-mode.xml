@@ -1,0 +1,41 @@
+<journey name="LC-06 An edited form survives process death and is not reloaded over">
+  <description>
+    LC-04 kills the process over a create form, where there is no source value to lose. This is the
+    harder half of NFR-07: an edit form has a task behind it, and TaskEditorViewModel must not fetch
+    it again over the restored fields. The rule is one line - `if (!hasSavedForm) taskId?.let(::load)`
+    - and getting it wrong replaces what the user typed with what the source still holds, which is
+    the older of the two.
+
+    The seed ids are stable across a restart (FakeTaskApi hands out task-1 upwards from a fresh
+    counter over the same SEED_TASKS), so the restored form is over a task that genuinely still
+    exists and the save at the end is expected to land. ED-09 is the opposite case, where it does not.
+
+    `am kill` restarts the process with failureRate back at its 0.15 default, so it is set again
+    before the save.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the "Renew domain registration" row</action>
+    <action>Verify that the title "Edit task" is on screen</action>
+    <action>Verify that the "Title" field contains "Renew domain registration"</action>
+    <action>Replace the contents of the "Title" field with "Renew it before Friday"</action>
+    <action>Tap the "Low" priority chip</action>
+    <action>Press the Home button</action>
+    <action>Using adb, kill the app process with `am kill com.rounds.test.to_dolist`</action>
+    <action>Reopen the app from the recents list</action>
+    <action>Verify that the title "Edit task" is on screen</action>
+    <action>Verify that the "Title" field still contains "Renew it before Friday"</action>
+    <action>Verify that the "Notes (optional)" field still contains "Expires end of month"</action>
+    <action>Verify that the "Low" priority chip is still selected and "High" is not</action>
+    <action>Verify that "Due in 3 days" is still on screen</action>
+    <action>Using adb, set the failure rate back to zero with `am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 0.0`</action>
+    <action>Tap the "Save" button</action>
+    <action>Verify that the app returns to the "Tasks" screen</action>
+    <action>Verify that "Renew it before Friday" is the first row</action>
+    <action>Verify that "Renew domain registration" is not on screen</action>
+    <action>Verify that the "Renew it before Friday" row has an element with the content description "Low"</action>
+  </actions>
+</journey>

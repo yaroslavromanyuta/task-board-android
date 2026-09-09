@@ -1,0 +1,34 @@
+<journey name="TH-02 Switching to dark mode keeps a half-filled form">
+  <description>
+    A theme change is a configuration change like a rotation, and it recreates the activity the same
+    way - but it is the one every user actually performs, usually from the notification shade, and
+    the suite has never covered it. NFR-06 says configuration change, not rotation; LC-01 to LC-03
+    only ever rotate.
+
+    It is also the cheapest way to notice a theme that is applied at composition rather than read from
+    the configuration: a form that comes back light on a dark device has kept its state and lost its
+    theme, which no rotation would reveal.
+
+    Reset the device afterwards with `adb shell cmd uimode night no` if it started in light mode.
+
+    Preconditions:
+      adb shell cmd uimode night no
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Type "Half a thought in daylight" into the "Title" field</action>
+    <action>Type "Written before the lights went out" into the "Notes (optional)" field</action>
+    <action>Tap the "High" priority chip</action>
+    <action>Using adb, switch the device to dark mode with `cmd uimode night yes`</action>
+    <action>Verify from a screenshot that the editor is now rendered on a dark background</action>
+    <action>Verify that the title "New task" is on screen</action>
+    <action>Verify that the "Title" field still contains "Half a thought in daylight"</action>
+    <action>Verify that the "Notes (optional)" field still contains "Written before the lights went out"</action>
+    <action>Verify that the "High" priority chip is still selected</action>
+    <action>Using adb, switch the device back to light mode with `cmd uimode night no`</action>
+    <action>Verify that the "Title" field still contains "Half a thought in daylight"</action>
+    <action>Verify that the "High" priority chip is still selected</action>
+  </actions>
+</journey>

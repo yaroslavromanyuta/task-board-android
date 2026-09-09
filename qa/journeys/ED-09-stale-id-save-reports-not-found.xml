@@ -1,0 +1,46 @@
+<journey name="ED-09 Saving a task the source has forgotten reports NotFound over the form">
+  <description>
+    The one path on which DataError.NotFound is reachable from the UI, and the reason it is worth a
+    journey where Timeout and Conflict are not: TaskEditorViewModel keeps taskId in SavedStateHandle,
+    the FakeTaskApi store is rebuilt from SEED_TASKS whenever the process restarts, and ids are
+    handed out from a counter that restarts with it. A task created in this session gets task-5; the
+    next process knows only task-1 to task-4. The editor comes back over a task that no longer
+    exists, and updateTask throws NotFound rather than a dice roll.
+
+    What is being checked is that the save failure is treated as a save failure: the form and every
+    field in it survive, the message names the real cause, and the user is not silently returned to
+    the list as though the edit had landed.
+
+    The save-error snackbar is SnackbarDuration.Short - about four seconds - so start the dump within
+    a second of the tap. Read qa/README.md, "Two things that will waste a run if you miss them".
+
+    Note that `am kill` restarts the process with failureRate back at its 0.15 default, which is why
+    the rate is set again after the app is reopened.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Add task"</action>
+    <action>Type "Written on sand" into the "Title" field</action>
+    <action>Tap the "Save" button</action>
+    <action>Verify that "Written on sand" is on screen</action>
+    <action>Tap the "Written on sand" row</action>
+    <action>Verify that the title "Edit task" is on screen</action>
+    <action>Press the Home button</action>
+    <action>Using adb, kill the app process with `am kill com.rounds.test.to_dolist`</action>
+    <action>Reopen the app from the recents list</action>
+    <action>Using adb, set the failure rate back to zero with `am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 0.0`</action>
+    <action>Verify that the title "Edit task" is on screen</action>
+    <action>Verify that the "Title" field still contains "Written on sand"</action>
+    <action>Replace the contents of the "Title" field with "Written on sand and gone"</action>
+    <action>Tap the "Save" button</action>
+    <action>Verify that "This task no longer exists." is on screen</action>
+    <action>Verify that the title "Edit task" is still on screen</action>
+    <action>Verify that the "Title" field still contains "Written on sand and gone"</action>
+    <action>Tap the element with the content description "Back"</action>
+    <action>Verify that the app returns to the "Tasks" screen with exactly four rows</action>
+    <action>Verify that "Written on sand" is not on screen</action>
+  </actions>
+</journey>

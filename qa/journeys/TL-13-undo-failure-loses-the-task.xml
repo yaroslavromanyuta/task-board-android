@@ -1,0 +1,31 @@
+<journey name="TL-13 An undo that fails leaves the task gone with no second offer">
+  <description>
+    KNOWN-DEFECT WATCHLIST. Asserts the current behaviour; whether it is the right behaviour is a
+    product call. See qa/TEST-PLAN.md.
+
+    Undo is the only route back from a delete and it is offered once. onUndoDelete clears the message
+    before the call, so a restore that fails takes the offer with it: the failure is reported over the
+    list as a plain Failure snackbar and the task is gone for good.
+
+    The 15% failure rate makes this a routine outcome rather than an exotic one - roughly one undo in
+    seven behaves this way against the shipped defaults - which is what makes it worth pinning on a
+    device rather than leaving to the ViewModel test that covers the same branch as state.
+
+    The delete snackbar is SnackbarDuration.Long, about ten seconds, so the broadcast has to land
+    inside that window. Send it immediately after reading the message.
+
+    Preconditions:
+      adb shell am force-stop com.rounds.test.to_dolist
+      adb shell am start -n com.rounds.test.to_dolist/.MainActivity --es qa_failure_rate 0.0
+  </description>
+  <actions>
+    <action>Tap the element with the content description "Delete task" on the "Book dentist" row</action>
+    <action>Verify that a message reading "Task deleted" is on screen</action>
+    <action>Using adb, break the source with `am broadcast -n com.rounds.test.to_dolist/.qa.QaControlReceiver -a com.rounds.test.to_dolist.QA_SET_FAILURE_RATE --es qa_failure_rate 1.0`</action>
+    <action>Tap the "Undo" action on that message</action>
+    <action>Verify that "No connection. Check your network and try again." is on screen</action>
+    <action>Verify that "Book dentist" is not on screen</action>
+    <action>Verify that no "Task deleted" message and no "Undo" action are on screen</action>
+    <action>Verify that exactly three elements with the content description "Delete task" are on screen</action>
+  </actions>
+</journey>
